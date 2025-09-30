@@ -15,7 +15,7 @@ const {
   preventXSS,
   adminLimiter 
 } = require('./middleware/security');
-require('dotenv').config();
+require('dotenv').config({path: "./"});
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -26,7 +26,7 @@ app.use(preventSQLInjection);
 app.use(preventXSS);
 
 console.log(process.env.VITE_PODUCTION_URL);
-
+console.log(process.env.MONGODB_URI);
 // Basic middleware
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
