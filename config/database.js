@@ -8,7 +8,7 @@ class Database {
   async connect() {
     try {
       // MongoDB connection string - using local MongoDB instance
-      const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/jasnav_projects';
+      const mongoURI = process.env.MONGODB_URI;
       
       this.connection = await mongoose.connect(mongoURI, {
         useNewUrlParser: true,
