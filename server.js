@@ -25,7 +25,7 @@ app.use(securityHeaders);
 app.use(preventSQLInjection);
 app.use(preventXSS);
 
-console.log(process.env.VITE_PODUCTION_URL);
+console.log(process.env.VITE_PRODUCTION_URL);
 console.log(process.env.MONGODB_URI);
 // Basic middleware
 app.use(cors({
