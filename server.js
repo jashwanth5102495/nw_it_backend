@@ -25,6 +25,8 @@ app.use(securityHeaders);
 app.use(preventSQLInjection);
 app.use(preventXSS);
 
+console.log(process.env.VITE_PODUCTION_URL);
+
 // Basic middleware
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
