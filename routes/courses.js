@@ -2,6 +2,7 @@ const express = require('express');
 const Course = require('../models/Course');
 const Payment = require('../models/Payment');
 const router = express.Router();
+const { authenticateStudent } = require('../middleware/auth');
 
 // Get all active courses
 router.get('/', async (req, res) => {
@@ -57,6 +58,47 @@ router.get('/:id', async (req, res) => {
       message: 'Error fetching course',
       error: error.message
     });
+  }
+});
+
+// Protect study material content route with authentication and purchase check
+router.use('/code/:courseId', authenticateStudent, async (req, res, next) => {
+  try {
+    const { courseId } = req.params;
+    const Course = require('../models/Course');
+    const Purchase = require('../models/Purchase');
+    const Payment = require('../models/Payment');
+    const Student = require('../models/Student');
+
+    // Find student
+    const student = await Student.findById(req.student.id);
+    if (!student) {
+      return res.status(401).json({ success: false, message: 'Student not found' });
+    }
+
+    // Resolve course by string id or ObjectId
+    let course = await Course.findOne({ courseId });
+    if (!course && courseId.match(/^[0-9a-fA-F]{24}$/)) {
+      course = await Course.findById(courseId);
+    }
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    // Check purchase/confirmation
+    const purchase = await Purchase.findOne({ studentId: student._id, courseId: course._id, status: 'completed' });
+    const payment = await Payment.findOne({ studentId: student._id, courseId: course._id }).sort({ createdAt: -1 });
+    const allowed = Boolean(purchase) || (payment && (payment.confirmationStatus === 'confirmed' || payment.status === 'completed'));
+
+    if (!allowed) {
+      return res.status(403).json({ success: false, message: 'Access denied: purchase confirmation required for this course' });
+    }
+
+    // Allow the original route handler to proceed
+    next();
+  } catch (error) {
+    console.error('Error in course access middleware:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error while verifying course access', error: error.message });
   }
 });
 
@@ -341,7 +383,7 @@ router.post('/purchase', async (req, res) => {
 });
 
 // Get purchased courses for a student
-router.get('/purchased/:studentId', async (req, res) => {
+router.get('/purchased/:studentId', authenticateStudent, async (req, res) => {
   try {
     const Purchase = require('../models/Purchase');
     const Student = require('../models/Student');
@@ -350,6 +392,21 @@ router.get('/purchased/:studentId', async (req, res) => {
     let studentIdentifier = req.params.studentId;
     console.log(studentIdentifier);
 
+    // Authorization: ensure the requester is the same student
+    const isEmailParam = studentIdentifier && studentIdentifier.includes('@');
+    const requesterEmail = req?.student?.studentData?.email || '';
+    const requesterId = (req?.student?.id || '').toString();
+    const isSelf = isEmailParam
+      ? (studentIdentifier.toLowerCase() === requesterEmail.toLowerCase())
+      : (studentIdentifier === requesterId);
+
+    if (!isSelf) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: you can only view your own purchased courses.'
+      });
+    }
+    
     // If the parameter looks like an email, find the student by email first
     const student = await Student.findOne({ email: studentIdentifier }).populate({
       path: 'enrolledCourses.courseId',
@@ -588,6 +645,42 @@ router.get('/progress/:studentId/:courseId', async (req, res) => {
       message: 'Error fetching course progress',
       error: error.message
     });
+  }
+});
+
+// Quick access check: verify if authenticated student has access to a course
+router.get('/access/:courseId', authenticateStudent, async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const Purchase = require('../models/Purchase');
+    const Student = require('../models/Student');
+    const Payment = require('../models/Payment');
+
+    // Find student from auth
+    const student = await Student.findById(req.student.id);
+    if (!student) {
+      return res.status(401).json({ success: false, allowed: false, message: 'Student not found' });
+    }
+
+    // Accept either string courseId or ObjectId mapping
+    let course = await Course.findOne({ courseId: courseId });
+    if (!course && courseId.match(/^[0-9a-fA-F]{24}$/)) {
+      course = await Course.findById(courseId);
+    }
+    if (!course) {
+      return res.status(404).json({ success: false, allowed: false, message: 'Course not found' });
+    }
+
+    // Check purchase or confirmed payment
+    const purchase = await Purchase.findOne({ studentId: student._id, courseId: course._id, status: 'completed' });
+    const payment = await Payment.findOne({ studentId: student._id, courseId: course._id }).sort({ createdAt: -1 });
+
+    const allowed = Boolean(purchase) || (payment && (payment.confirmationStatus === 'confirmed' || payment.status === 'completed'));
+
+    return res.json({ success: true, allowed, courseId: course.courseId || course._id.toString() });
+  } catch (error) {
+    console.error('Error verifying course access:', error);
+    res.status(500).json({ success: false, allowed: false, message: 'Error verifying course access', error: error.message });
   }
 });
 

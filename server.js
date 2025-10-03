@@ -15,12 +15,24 @@ const {
   preventXSS,
   adminLimiter 
 } = require('./middleware/security');
-require('dotenv').config({path: "./"});
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Security middleware (applied first)
+// Basic middleware
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? [process.env.VITE_PRODUCTION_URL]
+    : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Security middleware (applied after body parsing)
 app.use(securityHeaders);
 app.use(preventSQLInjection);
 app.use(preventXSS);
@@ -31,7 +43,7 @@ console.log(process.env.MONGODB_URI);
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? [process.env.VITE_PRODUCTION_URL] // Replace with your production domain
-    : ['http://localhost:3000', 'http://localhost:5173'],
+    : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
