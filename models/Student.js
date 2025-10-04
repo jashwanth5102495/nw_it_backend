@@ -123,8 +123,17 @@ const studentSchema = new mongoose.Schema({
     }],
     status: {
       type: String,
-      enum: ['active', 'completed', 'paused', 'dropped'],
+      enum: ['active', 'completed', 'paused', 'dropped', 'pending_payment', 'payment_rejected'],
       default: 'active'
+    },
+    paymentId: {
+      type: String,
+      default: null
+    },
+    confirmationStatus: {
+      type: String,
+      enum: ['waiting_for_confirmation', 'confirmed', 'rejected'],
+      default: null
     },
     finalGrade: {
       type: String,

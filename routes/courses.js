@@ -450,11 +450,15 @@ router.get('/purchased/:studentId', authenticateStudent, async (req, res) => {
         status: enrollment.status || 'active',
         // Payment confirmation status
         paymentStatus: payment ? payment.status : 'no_payment_record',
-        confirmationStatus: payment ? payment.confirmationStatus : 'no_payment_record',
+        confirmationStatus: payment ? payment.confirmationStatus : enrollment.confirmationStatus || 'no_payment_record',
         transactionId: payment ? payment.transactionId : null,
         paymentMethod: payment ? payment.paymentMethod : null,
         adminConfirmedBy: payment ? payment.adminConfirmedBy : null,
-        adminConfirmedAt: payment ? payment.adminConfirmedAt : null
+        adminConfirmedAt: payment ? payment.adminConfirmedAt : null,
+        // Enrollment specific fields
+        enrollmentStatus: enrollment.status,
+        enrollmentConfirmationStatus: enrollment.confirmationStatus,
+        paymentId: enrollment.paymentId
       };
     }));
     

@@ -386,33 +386,81 @@ router.put('/:paymentId/confirm', async (req, res) => {
       });
     }
 
-    // If payment is confirmed, enroll the student in the course
+    // If payment is confirmed, activate the existing enrollment
     if (confirmationStatus === 'confirmed') {
       try {
         const student = await Student.findById(payment.studentId);
         const course = await Course.findById(payment.courseId);
 
         if (student && course) {
-          // Check if already enrolled
+          // Find existing enrollment (should exist from when payment was created)
           const existingEnrollment = student.enrolledCourses.find(
             enrollment => enrollment.courseId.toString() === course._id.toString()
           );
 
-          if (!existingEnrollment) {
-            // Enroll student in course
+          if (existingEnrollment) {
+            // Activate existing enrollment
+            existingEnrollment.status = 'active';
+            existingEnrollment.confirmationStatus = 'confirmed';
+            console.log(`✅ Activated existing enrollment for ${student.email} in course ${course.title}`);
+          } else {
+            // Fallback: Create new enrollment if none exists
             student.enrolledCourses.push({
               courseId: course._id,
               enrollmentDate: new Date(),
               progress: 0,
-              status: 'active'
+              status: 'active',
+              paymentId: payment.paymentId,
+              confirmationStatus: 'confirmed'
             });
-            await student.save();
-            console.log(`Student ${student.email} enrolled in course ${course.title}`);
+            console.log(`✅ Created new enrollment for ${student.email} in course ${course.title}`);
           }
+          
+          // Update payment history status to completed
+          const paymentHistoryIndex = student.paymentHistory.findIndex(
+            p => p.transactionId === payment.transactionId
+          );
+          if (paymentHistoryIndex !== -1) {
+            student.paymentHistory[paymentHistoryIndex].status = 'completed';
+          }
+          
+          await student.save();
         }
       } catch (enrollmentError) {
-        console.error('Error enrolling student in course:', enrollmentError);
+        console.error('❌ Error activating enrollment:', enrollmentError);
         // Don't fail the payment confirmation if enrollment fails
+      }
+    }
+
+    // If payment is rejected or has error, update enrollment and payment history
+    if (confirmationStatus === 'rejected' || confirmationStatus === 'error') {
+      try {
+        const student = await Student.findById(payment.studentId);
+        const course = await Course.findById(payment.courseId);
+        
+        if (student && course) {
+          // Update enrollment status to rejected
+          const existingEnrollment = student.enrolledCourses.find(
+            enrollment => enrollment.courseId.toString() === course._id.toString()
+          );
+          if (existingEnrollment) {
+            existingEnrollment.status = 'payment_rejected';
+            existingEnrollment.confirmationStatus = 'rejected';
+          }
+          
+          // Update payment history
+          const paymentHistoryIndex = student.paymentHistory.findIndex(
+            p => p.transactionId === payment.transactionId
+          );
+          if (paymentHistoryIndex !== -1) {
+            student.paymentHistory[paymentHistoryIndex].status = 'failed';
+          }
+          
+          await student.save();
+          console.log(`❌ Payment rejected/error - updated enrollment status for student ${student.email}`);
+        }
+      } catch (updateError) {
+        console.error('❌ Error updating enrollment for rejected payment:', updateError);
       }
     }
 

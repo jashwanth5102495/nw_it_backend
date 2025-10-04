@@ -331,7 +331,7 @@ router.post('/:id/enroll', authenticateStudent, authorizeOwnProfile, async (req,
       }
     }
 
-    // Create payment record
+    // Create payment record - REQUIRES ADMIN APPROVAL
     const payment = new Payment({
       paymentId: paymentDetails.transactionId || `PAY_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       studentId: student._id,
@@ -339,9 +339,9 @@ router.post('/:id/enroll', authenticateStudent, authorizeOwnProfile, async (req,
       courseName: course.title,
       amount: finalPrice,
       originalAmount: paymentDetails.amount,
-      paymentMethod: paymentDetails.method || 'online',
-      status: 'completed',
-      confirmationStatus: 'confirmed',
+      paymentMethod: paymentDetails.method || 'manual_qr', // Changed to manual_qr to indicate admin review needed
+      status: 'pending', // Changed from 'completed' to 'pending'
+      confirmationStatus: 'waiting_for_confirmation', // Changed from 'confirmed' to 'waiting_for_confirmation'
       transactionId: paymentDetails.transactionId || `TXN-${Date.now()}`,
       studentName: `${student.firstName} ${student.lastName}`,
       studentEmail: student.email,
@@ -353,30 +353,42 @@ router.post('/:id/enroll', authenticateStudent, authorizeOwnProfile, async (req,
 
     await payment.save();
 
-    // Add to student payment historyohan for backward compatibility
+    // Add to student payment history for backward compatibility - but with pending status
     student.paymentHistory.push({
       courseId: course._id,
       amount: finalPrice,
-      paymentMethod: paymentDetails.method || 'online',
+      paymentMethod: paymentDetails.method || 'manual_qr',
       transactionId: payment.transactionId,
-      status: 'completed'
+      status: 'pending' // Changed from 'completed' to 'pending'
     });
 
-    // Enroll in course
-    await student.enrollInCourse(course._id);
+    // Create enrollment record with pending status - shows in student's course list but disabled
+    student.enrolledCourses.push({
+      courseId: course._id,
+      enrollmentDate: new Date(),
+      progress: 0,
+      status: 'pending_payment', // Custom status to indicate awaiting payment confirmation
+      paymentId: payment.paymentId, // Link to payment record
+      confirmationStatus: 'waiting_for_confirmation'
+    });
+
+    await student.save();
 
     res.json({
       success: true,
-      message: 'Successfully enrolled in course',
+      message: 'Course added to your list! Access will be granted once payment is confirmed.',
       data: {
         courseId: course.courseId || course._id,
         courseTitle: course.title,
-        enrollmentDate: new Date(),
         paymentId: payment.paymentId,
         finalPrice: finalPrice,
         originalPrice: paymentDetails.amount,
         discountApplied: discountAmount > 0,
-        discountAmount: discountAmount
+        discountAmount: discountAmount,
+        paymentStatus: 'pending',
+        confirmationStatus: 'waiting_for_confirmation',
+        enrollmentStatus: 'pending_payment',
+        note: 'Course added to your list. Access will be activated once admin confirms your payment.'
       }
     });
   } catch (error) {
