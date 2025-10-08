@@ -1325,25 +1325,28 @@ router.get('/by-referral/:referralCode', async (req, res) => {
     .populate('courseId', 'title courseId price')
     .sort({ createdAt: -1 });
 
-    // Transform the data with better structure
-    const studentsWithReferral = payments.map(payment => ({
-      _id: payment.studentId._id,
-      name: `${payment.studentId.firstName} ${payment.studentId.lastName}`,
-      email: payment.studentId.email,
-      phone: payment.studentId.phone,
-      studentId: payment.studentId.studentId,
-      selectedCourse: payment.courseName,
-      courseId: payment.courseId._id,
-      originalPrice: payment.originalAmount,
-      finalPrice: payment.amount,
-      discountAmount: payment.discountAmount,
-      commissionAmount: payment.commissionAmount,
-      paymentStatus: payment.status,
-      confirmationStatus: payment.confirmationStatus,
-      referralCode: payment.referralCode,
-      transactionId: payment.transactionId,
-      paymentDate: payment.createdAt,
-      commissionPaid: payment.commissionPaid
+    // Filter out records with missing population to avoid runtime errors
+    const safePayments = payments.filter(p => p && p.studentId && p.courseId);
+
+    // Transform the data with better structure and defensive fallbacks
+    const studentsWithReferral = safePayments.map(payment => ({
+      _id: payment.studentId?._id,
+      name: `${payment.studentId?.firstName || ''} ${payment.studentId?.lastName || ''}`.trim(),
+      email: payment.studentId?.email || '',
+      phone: payment.studentId?.phone || '',
+      studentId: payment.studentId?.studentId || '',
+      selectedCourse: payment.courseId?.title || payment.courseName || 'N/A',
+      courseId: payment.courseId?._id || null,
+      originalPrice: typeof payment.originalAmount === 'number' ? payment.originalAmount : payment.amount,
+      finalPrice: typeof payment.amount === 'number' ? payment.amount : 0,
+      discountAmount: typeof payment.discountAmount === 'number' ? payment.discountAmount : 0,
+      commissionAmount: typeof payment.commissionAmount === 'number' ? payment.commissionAmount : 0,
+      paymentStatus: payment.status || 'pending',
+      confirmationStatus: payment.confirmationStatus || 'waiting_for_confirmation',
+      referralCode: payment.referralCode || referralCode.toUpperCase(),
+      transactionId: payment.transactionId || '',
+      paymentDate: payment.createdAt || payment.paymentDate || new Date(),
+      commissionPaid: Boolean(payment.commissionPaid)
     }));
 
     // Calculate summary for the faculty
