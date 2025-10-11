@@ -331,9 +331,65 @@ router.post('/:id/enroll', authenticateStudent, authorizeOwnProfile, async (req,
       }
     }
 
+    // Prevent duplicate transaction IDs
+    const existingPaymentByTxn = await Payment.findOne({ transactionId: paymentDetails.transactionId });
+    if (existingPaymentByTxn) {
+      // If payment exists and belongs to this student/course, create enrollment using it
+      const sameStudent = existingPaymentByTxn.studentEmail === student.email || existingPaymentByTxn.studentId.toString() === student._id.toString();
+      const sameCourse = existingPaymentByTxn.courseId.toString() === course._id.toString();
+      if (sameStudent && sameCourse) {
+        // Prevent duplicate enrollment
+        const alreadyEnrolled = student.enrolledCourses.find(
+          e => e.courseId.toString() === course._id.toString()
+        );
+        if (!alreadyEnrolled) {
+          student.enrolledCourses.push({
+            courseId: course._id,
+            enrollmentDate: new Date(),
+            progress: 0,
+            status: 'pending_payment',
+            paymentId: existingPaymentByTxn.paymentId,
+            confirmationStatus: existingPaymentByTxn.confirmationStatus || 'waiting_for_confirmation'
+          });
+          // Add to payment history for backward compatibility
+          student.paymentHistory.push({
+            courseId: course._id,
+            amount: existingPaymentByTxn.amount,
+            paymentMethod: existingPaymentByTxn.paymentMethod || 'manual_qr',
+            transactionId: existingPaymentByTxn.transactionId,
+            status: existingPaymentByTxn.status || 'pending'
+          });
+          await student.save();
+        }
+
+        return res.json({
+          success: true,
+          message: 'Course added to your list! Access will be granted once payment is confirmed.',
+          data: {
+            courseId: course.courseId || course._id,
+            courseTitle: course.title,
+            paymentId: existingPaymentByTxn.paymentId,
+            finalPrice: existingPaymentByTxn.amount,
+            originalPrice: existingPaymentByTxn.originalAmount,
+            discountApplied: !!existingPaymentByTxn.discountAmount,
+            discountAmount: existingPaymentByTxn.discountAmount || 0,
+            paymentStatus: existingPaymentByTxn.status || 'pending',
+            confirmationStatus: existingPaymentByTxn.confirmationStatus || 'waiting_for_confirmation',
+            enrollmentStatus: 'pending_payment',
+            note: 'Course added to your list. Access will be activated once admin confirms your payment.'
+          }
+        });
+      }
+      // Transaction ID is in use for another student/course
+      return res.status(400).json({
+        success: false,
+        message: 'This transaction ID is already recorded for a different student or course'
+      });
+    }
+
     // Create payment record - REQUIRES ADMIN APPROVAL
     const payment = new Payment({
-      paymentId: paymentDetails.transactionId || `PAY_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      paymentId: `PAY_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       studentId: student._id,
       courseId: course._id,
       courseName: course.title,

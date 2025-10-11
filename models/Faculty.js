@@ -68,9 +68,12 @@ facultySchema.methods.generateReferralCode = function() {
 
 // Method to calculate commission for a payment
 facultySchema.methods.calculateCommission = function(originalPrice) {
-  const discountAmount = originalPrice * 0.60; // 60% discount
-  const finalPrice = originalPrice - discountAmount;
-  const commission = discountAmount; // Faculty gets the discount amount as commission
+  const rate = typeof this.commissionRate === 'number' && this.commissionRate >= 0 && this.commissionRate <= 1
+    ? this.commissionRate
+    : 0.60; // fallback to 60%
+  const discountAmount = originalPrice * rate;
+  const finalPrice = Math.max(0, originalPrice - discountAmount);
+  const commission = discountAmount; // Commission equals discount amount
   return {
     originalPrice,
     discountAmount,
