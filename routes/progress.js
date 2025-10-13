@@ -4,6 +4,33 @@ const Student = require('../models/Student');
 const Course = require('../models/Course');
 const router = express.Router();
 
+// Utility: resolve course by human-friendly courseId or Mongo ObjectId
+async function resolveCourseId(courseIdParam) {
+  if (!courseIdParam) return null;
+  let course = await Course.findOne({ courseId: courseIdParam });
+  // Fallback: treat as ObjectId
+  if (!course && /^[0-9a-fA-F]{24}$/.test(courseIdParam)) {
+    course = await Course.findById(courseIdParam);
+  }
+  return course;
+}
+
+// Utility: ensure StudentProgress record exists
+async function getOrCreateProgress(studentId, courseDoc) {
+  let progress = await StudentProgress.findOne({ studentId, courseId: courseDoc._id });
+  if (!progress) {
+    progress = new StudentProgress({
+      studentId,
+      courseId: courseDoc._id,
+      enrollmentDate: new Date(),
+      modules: [],
+      overallProgress: 0,
+      status: 'in-progress'
+    });
+  }
+  return progress;
+}
+
 // ===== ADMIN/FACULTY PROGRESS ROUTES =====
 
 // Get all students' progress for a specific course (Faculty/Admin)
@@ -414,3 +441,231 @@ router.post('/bulk-update', async (req, res) => {
 });
 
 module.exports = router;
+ 
+// ===== STUDENT PROGRESS UPDATE ROUTES =====
+
+// Update assignment progress for a student within a course/module
+router.put('/student/:studentId/assignment', async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const { courseId, moduleId, assignmentId, assignmentTitle, status, score, maxScore = 100, timeSpent = 0, feedback } = req.body;
+
+    if (!studentId || !courseId || !moduleId || !assignmentId || !assignmentTitle) {
+      return res.status(400).json({ success: false, message: 'studentId, courseId, moduleId, assignmentId, assignmentTitle are required' });
+    }
+
+    const course = await resolveCourseId(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    let progress = await getOrCreateProgress(studentId, course);
+
+    // Find or create module progress
+    let moduleProg = progress.modules.find(m => m.moduleId === moduleId);
+    if (!moduleProg) {
+      progress.modules.push({
+        moduleId,
+        moduleTitle: moduleId,
+        status: 'in-progress',
+        lessons: [],
+        assignments: [],
+        quizzes: [],
+        progressPercentage: 0,
+        totalTimeSpent: 0
+      });
+      moduleProg = progress.modules.find(m => m.moduleId === moduleId);
+    }
+
+    // Find or create assignment entry
+    let assignment = moduleProg.assignments.find(a => a.assignmentId === assignmentId);
+    const now = new Date();
+    if (!assignment) {
+      moduleProg.assignments.push({
+        assignmentId,
+        assignmentTitle,
+        status: status || 'submitted',
+        startedAt: status === 'in-progress' ? now : null,
+        submittedAt: status === 'submitted' || status === 'graded' ? now : null,
+        gradedAt: status === 'graded' ? now : null,
+        score: score ?? null,
+        maxScore,
+        attempts: [],
+        feedback: feedback || null,
+        timeSpent: timeSpent || 0
+      });
+      assignment = moduleProg.assignments.find(a => a.assignmentId === assignmentId);
+    } else {
+      // Update existing assignment
+      if (status) assignment.status = status;
+      if (status === 'submitted' || status === 'graded') assignment.submittedAt = now;
+      if (status === 'graded') assignment.gradedAt = now;
+      if (typeof score === 'number') assignment.score = score;
+      if (typeof maxScore === 'number') assignment.maxScore = maxScore;
+      if (typeof timeSpent === 'number') assignment.timeSpent = (assignment.timeSpent || 0) + timeSpent;
+      if (feedback) assignment.feedback = feedback;
+    }
+
+    // Record attempt on submission/graded
+    if (status === 'submitted' || status === 'graded') {
+      const attemptNumber = (assignment.attempts?.length || 0) + 1;
+      assignment.attempts.push({ attemptNumber, submittedAt: now, score: typeof score === 'number' ? score : undefined, feedback, timeSpent });
+    }
+
+    // Update module progress percentage
+    const totalItems = (moduleProg.lessons?.length || 0) + (moduleProg.assignments?.length || 0) + (moduleProg.quizzes?.length || 0);
+    const completedItems = (moduleProg.lessons?.filter(l => l.status === 'completed').length || 0)
+      + (moduleProg.assignments?.filter(a => a.status === 'graded').length || 0)
+      + (moduleProg.quizzes?.filter(q => q.status === 'completed').length || 0);
+    moduleProg.progressPercentage = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : moduleProg.progressPercentage || 0;
+
+    // Activity log
+    progress.activityLog.push({ type: 'assignment_submitted', details: { moduleId, assignmentId, status, score }, timestamp: now });
+    progress.lastActivityAt = now;
+
+    // Update performance metrics and overall progress
+    progress.updatePerformanceMetrics();
+    progress.updateOverallProgress();
+
+    await progress.save();
+
+    return res.json({ success: true, message: 'Assignment progress updated', data: { overallProgress: progress.overallProgress } });
+  } catch (error) {
+    console.error('Error updating assignment progress:', error);
+    return res.status(500).json({ success: false, message: 'Error updating assignment progress', error: error.message });
+  }
+});
+
+// Update quiz progress for a student within a course/module
+router.put('/student/:studentId/quiz', async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const { courseId, moduleId, quizId, quizTitle, status = 'completed', score, maxScore = 100, timeSpent = 0, answers = [] } = req.body;
+
+    if (!studentId || !courseId || !moduleId || !quizId || !quizTitle) {
+      return res.status(400).json({ success: false, message: 'studentId, courseId, moduleId, quizId, quizTitle are required' });
+    }
+
+    const course = await resolveCourseId(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    let progress = await getOrCreateProgress(studentId, course);
+
+    // Find or create module progress
+    let moduleProg = progress.modules.find(m => m.moduleId === moduleId);
+    if (!moduleProg) {
+      progress.modules.push({
+        moduleId,
+        moduleTitle: moduleId,
+        status: 'in-progress',
+        lessons: [],
+        assignments: [],
+        quizzes: [],
+        progressPercentage: 0,
+        totalTimeSpent: 0
+      });
+      moduleProg = progress.modules.find(m => m.moduleId === moduleId);
+    }
+
+    // Find or create quiz entry
+    let quiz = moduleProg.quizzes.find(q => q.quizId === quizId);
+    const now = new Date();
+    if (!quiz) {
+      moduleProg.quizzes.push({
+        quizId,
+        quizTitle,
+        status,
+        attempts: [],
+        bestScore: typeof score === 'number' ? score : 0,
+        totalAttempts: 0,
+        averageScore: typeof score === 'number' ? score : 0
+      });
+      quiz = moduleProg.quizzes.find(q => q.quizId === quizId);
+    } else {
+      if (status) quiz.status = status;
+    }
+
+    // Add attempt
+    const attemptNumber = (quiz.attempts?.length || 0) + 1;
+    quiz.attempts.push({ attemptNumber, startedAt: now, completedAt: now, score, maxScore, timeSpent, answers });
+    quiz.totalAttempts = attemptNumber;
+    if (typeof score === 'number') {
+      quiz.bestScore = Math.max(quiz.bestScore || 0, score);
+      const totalScore = (quiz.averageScore || 0) * (attemptNumber - 1) + score;
+      quiz.averageScore = Math.round(totalScore / attemptNumber);
+    }
+
+    // Update module progress percentage
+    const totalItems = (moduleProg.lessons?.length || 0) + (moduleProg.assignments?.length || 0) + (moduleProg.quizzes?.length || 0);
+    const completedItems = (moduleProg.lessons?.filter(l => l.status === 'completed').length || 0)
+      + (moduleProg.assignments?.filter(a => a.status === 'graded').length || 0)
+      + (moduleProg.quizzes?.filter(q => q.status === 'completed').length || 0);
+    moduleProg.progressPercentage = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : moduleProg.progressPercentage || 0;
+
+    // Activity log
+    progress.activityLog.push({ type: 'quiz_taken', details: { moduleId, quizId, score }, timestamp: now });
+    progress.lastActivityAt = now;
+
+    // Update performance metrics and overall progress
+    progress.updatePerformanceMetrics();
+    progress.updateOverallProgress();
+
+    await progress.save();
+
+    return res.json({ success: true, message: 'Quiz progress updated', data: { overallProgress: progress.overallProgress } });
+  } catch (error) {
+    console.error('Error updating quiz progress:', error);
+    return res.status(500).json({ success: false, message: 'Error updating quiz progress', error: error.message });
+  }
+});
+
+// Get assignment/quiz summary counts for a student course
+router.get('/student/:studentId/course/:courseId/summary', async (req, res) => {
+  try {
+    const { studentId, courseId } = req.params;
+    const course = await resolveCourseId(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    const progress = await StudentProgress.findOne({ studentId, courseId: course._id });
+    if (!progress) {
+      return res.json({ success: true, data: { assignments: { completed: 0, total: 0, list: [] }, quizzes: { completed: 0, total: 0, list: [] } } });
+    }
+
+    let assignmentTotal = 0;
+    let assignmentCompleted = 0;
+    const assignmentList = [];
+    let quizTotal = 0;
+    let quizCompleted = 0;
+    const quizList = [];
+
+    for (const mod of progress.modules || []) {
+      // Assignments
+      for (const a of mod.assignments || []) {
+        assignmentTotal += 1;
+        if (a.status === 'graded') assignmentCompleted += 1;
+        assignmentList.push({ title: a.assignmentTitle, status: a.status, score: a.score });
+      }
+      // Quizzes
+      for (const q of mod.quizzes || []) {
+        quizTotal += 1;
+        if (q.status === 'completed') quizCompleted += 1;
+        quizList.push({ title: q.quizTitle, status: q.status, score: q.bestScore });
+      }
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        assignments: { completed: assignmentCompleted, total: assignmentTotal, list: assignmentList },
+        quizzes: { completed: quizCompleted, total: quizTotal, list: quizList }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching course summary:', error);
+    return res.status(500).json({ success: false, message: 'Error fetching course summary', error: error.message });
+  }
+});

@@ -592,6 +592,64 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// Admin: Reset a student's password and return a temporary password
+router.post('/admin/reset-password/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find the student by ID
+    const student = await Student.findById(id);
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    // Find associated user record
+    const user = await User.findById(student.user_id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Associated user account not found'
+      });
+    }
+
+    // Generate a temporary password
+    const generateTempPassword = () => {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*';
+      let pass = '';
+      for (let i = 0; i < 10; i++) {
+        pass += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return pass;
+    };
+
+    const tempPassword = generateTempPassword();
+
+    // Set and save new password (User model should hash on save)
+    user.password = tempPassword;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Temporary password generated successfully',
+      data: {
+        studentId: student.studentId,
+        username: user.username,
+        tempPassword
+      }
+    });
+  } catch (error) {
+    console.error('Error resetting student password:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error resetting student password',
+      error: error.message
+    });
+  }
+});
+
 // ===== STUDENT PROGRESS TRACKING ROUTES =====
 
 // Get comprehensive progress for a student across all courses
@@ -950,6 +1008,23 @@ router.put('/:id/progress/assignment', authenticateStudent, authorizeOwnProfile,
     if (maxScore !== undefined) assignment.maxScore = maxScore;
     if (timeSpent !== undefined) assignment.timeSpent += timeSpent;
     if (feedback) assignment.feedback = feedback;
+
+    // Auto-grade: mark completed when score > 60% of max (more than 6/10)
+    if (
+      typeof assignment.score === 'number' &&
+      typeof assignment.maxScore === 'number'
+    ) {
+      const prevStatus = assignment.status;
+      const passedThreshold = assignment.score > (assignment.maxScore * 0.6);
+      if (passedThreshold && prevStatus !== 'graded') {
+        assignment.status = 'graded';
+        assignment.completedAt = new Date();
+        progress.activityLog.push({
+          type: 'assignment_completed',
+          details: { moduleId, assignmentId, score: assignment.score, maxScore: assignment.maxScore }
+        });
+      }
+    }
 
     // Handle submission
     if (status === 'submitted' && !assignment.submittedAt) {
