@@ -15,6 +15,7 @@ const {
   preventXSS,
   adminLimiter 
 } = require('./middleware/security');
+const { authenticateAdmin } = require('./middleware/adminAuth');
 require('dotenv').config();
 
 const app = express();
@@ -53,12 +54,12 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Routes with rate limiting for sensitive endpoints
 app.use('/api/projects', projectRoutes);
-app.use('/api/students', adminLimiter, studentRoutes); // Admin-only routes
-app.use('/api/courses', adminLimiter, courseRoutes); // Admin-only routes
-app.use('/api/payments', adminLimiter, paymentRoutes); // Admin-only routes
-app.use('/api/faculty', adminLimiter, facultyRoutes); // Admin-only routes
-app.use('/api/progress', adminLimiter, progressRoutes); // Progress tracking routes
-app.use('/api/analytics', adminLimiter, analyticsRoutes); // Analytics routes
+app.use('/api/students', adminLimiter, authenticateAdmin, studentRoutes); // Admin-only routes
+app.use('/api/courses', adminLimiter, authenticateAdmin, courseRoutes); // Admin-only routes
+app.use('/api/payments', adminLimiter, authenticateAdmin, paymentRoutes); // Admin-only routes
+app.use('/api/faculty', adminLimiter, authenticateAdmin, facultyRoutes); // Admin-only routes
+app.use('/api/progress', adminLimiter, authenticateAdmin, progressRoutes); // Progress tracking routes
+app.use('/api/analytics', adminLimiter, authenticateAdmin, analyticsRoutes); // Analytics routes
 app.use('/api/auth', authRoutes); // Auth routes have their own rate limiting
 
 // Health check endpoint

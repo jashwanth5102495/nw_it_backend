@@ -502,10 +502,17 @@ router.put('/:id/progress', authenticateStudent, authorizeOwnProfile, async (req
 // Get all students (Admin only)
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, limit = 10, search } = req.query;
-    const skip = (page - 1) * limit;
+    const { page = 1, limit = 10, search, all, includeInactive } = req.query;
+    const parsedLimit = parseInt(limit);
+    const skip = (parseInt(page) - 1) * parsedLimit;
 
-    let query = { isActive: true };
+    // Build query: include inactive only if explicitly requested
+    let query = {};
+    const includeInactiveFlag = String(includeInactive).toLowerCase();
+    if (includeInactiveFlag !== 'true' && includeInactiveFlag !== '1') {
+      query.isActive = true;
+    }
+
     if (search) {
       query.$or = [
         { firstName: { $regex: search, $options: 'i' } },
@@ -515,22 +522,30 @@ router.get('/', async (req, res) => {
       ];
     }
 
-    const students = await Student.find(query)
+    const usePagination = (() => {
+      const allFlag = String(all).toLowerCase();
+      return !(allFlag === 'true' || allFlag === '1');
+    })();
+
+    let queryBuilder = Student.find(query)
       .populate('enrolledCourses.courseId', 'title courseId price')
       .populate('paymentHistory.courseId', 'title courseId price')
       .select('-password')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+      .sort({ createdAt: -1 });
 
+    if (usePagination) {
+      queryBuilder = queryBuilder.skip(skip).limit(parsedLimit);
+    }
+
+    const students = await queryBuilder.exec();
     const total = await Student.countDocuments(query);
 
     res.json({
       success: true,
       data: students,
       pagination: {
-        current: parseInt(page),
-        pages: Math.ceil(total / limit),
+        current: usePagination ? parseInt(page) : 1,
+        pages: usePagination ? Math.ceil(total / parsedLimit) : 1,
         total
       }
     });
