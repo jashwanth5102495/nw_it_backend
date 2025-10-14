@@ -274,6 +274,39 @@ router.put('/profile/:id', authenticateStudent, authorizeOwnProfile, async (req,
   }
 });
 
+// Update student password (current password not required; must be authenticated)
+router.put('/:id/password', authenticateStudent, authorizeOwnProfile, async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+
+    if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 6 characters'
+      });
+    }
+
+    const student = await Student.findById(req.params.id);
+    if (!student) {
+      return res.status(404).json({ success: false, message: 'Student not found' });
+    }
+
+    const user = await User.findById(student.user_id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Associated user account not found' });
+    }
+
+    // Update password; User model hashes password on save
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Error updating student password:', error);
+    res.status(500).json({ success: false, message: 'Error updating password', error: error.message });
+  }
+});
+
 // Enroll in additional course
 router.post('/:id/enroll', authenticateStudent, authorizeOwnProfile, async (req, res) => {
   try {
