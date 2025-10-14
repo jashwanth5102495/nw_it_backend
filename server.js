@@ -54,12 +54,14 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Routes with rate limiting for sensitive endpoints
 app.use('/api/projects', projectRoutes);
-app.use('/api/students', adminLimiter, authenticateAdmin, studentRoutes); // Admin-only routes
-app.use('/api/courses', adminLimiter, authenticateAdmin, courseRoutes); // Admin-only routes
-app.use('/api/payments', adminLimiter, authenticateAdmin, paymentRoutes); // Admin-only routes
-app.use('/api/faculty', adminLimiter, authenticateAdmin, facultyRoutes); // Admin-only routes
-app.use('/api/progress', adminLimiter, authenticateAdmin, progressRoutes); // Progress tracking routes
-app.use('/api/analytics', adminLimiter, authenticateAdmin, analyticsRoutes); // Analytics routes
+// Public/student routes should NOT require admin token globally
+app.use('/api/students', studentRoutes);
+app.use('/api/courses', courseRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/faculty', facultyRoutes);
+app.use('/api/progress', progressRoutes);
+// Keep analytics behind admin protection
+app.use('/api/analytics', adminLimiter, authenticateAdmin, analyticsRoutes);
 app.use('/api/auth', authRoutes); // Auth routes have their own rate limiting
 
 // Health check endpoint
