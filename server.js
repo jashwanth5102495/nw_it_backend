@@ -8,6 +8,7 @@ const paymentRoutes = require('./routes/payments');
 const facultyRoutes = require('./routes/faculty');
 const progressRoutes = require('./routes/progress');
 const analyticsRoutes = require('./routes/analytics');
+const assignmentRoutes = require('./routes/assignments');
 const { router: authRoutes } = require('./routes/auth');
 const { 
   securityHeaders, 
@@ -60,6 +61,7 @@ app.use('/api/courses', courseRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/faculty', facultyRoutes);
 app.use('/api/progress', progressRoutes);
+app.use('/api/assignments', assignmentRoutes);
 // Keep analytics behind admin protection
 app.use('/api/analytics', adminLimiter, authenticateAdmin, analyticsRoutes);
 app.use('/api/auth', authRoutes); // Auth routes have their own rate limiting
