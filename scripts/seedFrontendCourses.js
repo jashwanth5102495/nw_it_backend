@@ -106,6 +106,50 @@ const courses = [
     }
   },
   {
+    courseId: 'frontend-intermediate',
+    title: 'Frontend Development - Intermediate',
+    description: 'Learn Django fundamentals, databases (MySQL & MongoDB), API integration, environment configuration, and web security best practices. Build backend-powered web applications while strengthening frontend integration skills',
+    category: 'Frontend Development',
+    level: 'Intermediate',
+    price: 1950,
+    duration: '10 weeks',
+    modules: [
+      {
+        title: 'Django Fundamentals & MVC',
+        duration: '3 weeks',
+        topics: ['Project setup', 'Apps & URL routing', 'Views & templates', 'Models & ORM']
+      },
+      {
+        title: 'Relational & Document Databases',
+        duration: '3 weeks',
+        topics: ['MySQL schema design', 'MongoDB collections', 'Data modeling patterns', 'CRUD operations']
+      },
+      {
+        title: 'API Integration & Environment Config',
+        duration: '2 weeks',
+        topics: ['REST APIs & requests', 'Authentication tokens', 'Environment variables (.env)', 'Config management']
+      },
+      {
+        title: 'Web Security Best Practices',
+        duration: '2 weeks',
+        topics: ['Input validation', 'Authentication & sessions', 'CSRF protection', 'Secure deployment']
+      }
+    ],
+    prerequisites: ['Frontend beginner knowledge or equivalent', 'Basic JavaScript', 'Basic database concepts'],
+    learningOutcomes: [
+      'Build web applications using Django MVC',
+      'Design relational and document databases effectively',
+      'Integrate REST APIs with secure authentication',
+      'Manage environment configuration for deployments',
+      'Apply core web security practices in projects'
+    ],
+    instructor: {
+      name: 'Priya Sharma',
+      bio: 'Full-stack developer specializing in Django and modern web security',
+      experience: '7+ years in backend and frontend integration'
+    }
+  },
+  {
     courseId: 'frontend-advanced',
     title: 'Frontend Development - Advanced',
     description: 'Master advanced frontend concepts including performance optimization and state management',
