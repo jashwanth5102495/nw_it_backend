@@ -17,6 +17,8 @@ const {
   adminLimiter 
 } = require('./middleware/security');
 const { authenticateAdmin } = require('./middleware/adminAuth');
+// Add auto-seed utility
+const { seedIfEmpty } = require('./utils/autoSeedAssignments');
 require('dotenv').config();
 
 const app = express();
@@ -107,6 +109,8 @@ app.use('*', (req, res) => {
 app.listen(PORT, async () => {
   try {
     await db.connect();
+    // Auto-seed assignments only if collection is empty
+    await seedIfEmpty();
     console.log(`✅ Database connected to MongoDB successfully`);
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📊 API available at http://localhost:${PORT}/api`);
