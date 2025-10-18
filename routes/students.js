@@ -1514,36 +1514,49 @@ router.get('/by-referral/:referralCode', async (req, res) => {
     .populate('courseId', 'title courseId price')
     .sort({ createdAt: -1 });
 
-    // Transform the data with better structure
-    const studentsWithReferral = payments.map(payment => ({
-      _id: payment.studentId._id,
-      name: `${payment.studentId.firstName} ${payment.studentId.lastName}`,
-      email: payment.studentId.email,
-      phone: payment.studentId.phone,
-      studentId: payment.studentId.studentId,
-      selectedCourse: payment.courseName,
-      courseId: payment.courseId._id,
-      originalPrice: payment.originalAmount,
-      finalPrice: payment.amount,
-      discountAmount: payment.discountAmount,
-      commissionAmount: payment.commissionAmount,
-      paymentStatus: payment.status,
-      confirmationStatus: payment.confirmationStatus,
-      referralCode: payment.referralCode,
-      transactionId: payment.transactionId,
-      paymentDate: payment.createdAt,
-      commissionPaid: payment.commissionPaid
-    }));
+    // Transform the data with safer structure (handle missing populated docs)
+    const studentsWithReferral = payments.map((payment) => {
+      const student = payment.studentId || null; // may be null if populate failed
+      const course = payment.courseId || null;   // may be null if course missing
 
-    // Calculate summary for the faculty
+      const name = student ? `${student.firstName || ''} ${student.lastName || ''}`.trim() : (payment.studentName || 'Unknown');
+      const email = (student && student.email) || payment.studentEmail || '';
+      const phone = (student && student.phone) || '';
+      const studentCode = (student && student.studentId) || '';
+
+      const selectedCourse = payment.courseName || (course && (course.title || course.courseId)) || 'Unknown';
+      const courseObjectId = course && course._id ? course._id : null;
+
+      return {
+        _id: String((student && student._id) || payment.paymentId || Math.random().toString(36).slice(2)),
+        name,
+        email,
+        phone,
+        studentId: studentCode,
+        selectedCourse,
+        courseId: courseObjectId,
+        originalPrice: Number(payment.originalAmount || (course && course.price) || 0),
+        finalPrice: Number(payment.amount || 0),
+        discountAmount: Number(payment.discountAmount || 0),
+        commissionAmount: Number(payment.commissionAmount || 0),
+        paymentStatus: payment.status || 'completed',
+        confirmationStatus: payment.confirmationStatus || 'waiting_for_confirmation',
+        referralCode: payment.referralCode || referralCode.toUpperCase(),
+        transactionId: payment.transactionId || '',
+        paymentDate: payment.createdAt || payment.paymentDate || new Date(),
+        commissionPaid: Boolean(payment.commissionPaid)
+      };
+    });
+
+    // Calculate summary for the faculty (guard against undefined numbers)
     const summary = {
       facultyName: faculty.name,
       facultyEmail: faculty.email,
       totalStudents: studentsWithReferral.length,
-      totalRevenue: studentsWithReferral.reduce((sum, student) => sum + student.finalPrice, 0),
-      totalCommissions: studentsWithReferral.reduce((sum, student) => sum + student.commissionAmount, 0),
-      paidCommissions: studentsWithReferral.filter(s => s.commissionPaid).reduce((sum, student) => sum + student.commissionAmount, 0),
-      unpaidCommissions: studentsWithReferral.filter(s => !s.commissionPaid).reduce((sum, student) => sum + student.commissionAmount, 0)
+      totalRevenue: studentsWithReferral.reduce((sum, student) => sum + (Number(student.finalPrice) || 0), 0),
+      totalCommissions: studentsWithReferral.reduce((sum, student) => sum + (Number(student.commissionAmount) || 0), 0),
+      paidCommissions: studentsWithReferral.filter((s) => s.commissionPaid).reduce((sum, student) => sum + (Number(student.commissionAmount) || 0), 0),
+      unpaidCommissions: studentsWithReferral.filter((s) => !s.commissionPaid).reduce((sum, student) => sum + (Number(student.commissionAmount) || 0), 0)
     };
 
     res.json({
