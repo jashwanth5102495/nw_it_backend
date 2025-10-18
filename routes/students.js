@@ -320,9 +320,18 @@ router.post('/:id/enroll', authenticateStudent, authorizeOwnProfile, async (req,
       });
     }
 
-    // Find course by courseId field (not by MongoDB _id)
+    // Find course by courseId field (accept various cases and ObjectId)
     const courses = await Course.find();
-    const course = await Course.findOne({ courseId: courseId.toUpperCase() });
+    let course = await Course.findOne({ courseId: courseId });
+    if (!course) {
+      course = await Course.findOne({ courseId: (courseId || '').toUpperCase() });
+    }
+    if (!course) {
+      course = await Course.findOne({ courseId: (courseId || '').toLowerCase() });
+    }
+    if (!course && courseId && courseId.match(/^[0-9a-fA-F]{24}$/)) {
+      course = await Course.findById(courseId);
+    }
     
     console.log('Found course:', course ? course.title : 'Not found');
     console.log('Searching for courseId:', courseId);
