@@ -23,14 +23,32 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Basic middleware
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.VITE_PRODUCTION_URL]
-    : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'],
+// Unified and hardened CORS configuration
+const allowedOrigins = [
+  process.env.VITE_PRODUCTION_URL,
+  process.env.VITE_PREVIEW_URL,
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:5174',
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    const isDev = process.env.NODE_ENV !== 'production';
+    // Allow non-browser/CLI requests (no origin) and dev
+    if (!origin || isDev) return callback(null, true);
+    const whitelist = allowedOrigins.filter(Boolean);
+    const isWhitelisted = whitelist.includes(origin)
+      || /\.vercel\.app$/.test(origin)
+      || /\.railway\.app$/.test(origin);
+    if (isWhitelisted) return callback(null, true);
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
-}));
+};
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -41,15 +59,7 @@ app.use(preventXSS);
 
 console.log(process.env.VITE_PRODUCTION_URL);
 console.log(process.env.MONGODB_URI);
-// Basic middleware
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.VITE_PRODUCTION_URL] // Replace with your production domain
-    : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// CORS is configured above; duplicate block removed.
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
