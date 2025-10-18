@@ -271,7 +271,7 @@ router.get('/level/:level', async (req, res) => {
 router.post('/purchase', async (req, res) => {
   try {
     const { courseId, studentId, paymentId, referralCode } = req.body;
-
+    
     console.log("Courses Purchase: ", { courseId, studentId, paymentId, referralCode });
 
     // Verify course exists

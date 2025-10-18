@@ -311,7 +311,7 @@ router.put('/:id/password', authenticateStudent, authorizeOwnProfile, async (req
 router.post('/:id/enroll', authenticateStudent, authorizeOwnProfile, async (req, res) => {
   try {
     const { courseId, paymentDetails, referralCode } = req.body;
-    
+    console.log("Enroll Course ID: ", courseId);
     const student = await Student.findById(req.params.id);
     if (!student) {
       return res.status(404).json({
@@ -323,6 +323,7 @@ router.post('/:id/enroll', authenticateStudent, authorizeOwnProfile, async (req,
     // Find course by courseId field (accept various cases and ObjectId)
     const courses = await Course.find();
     let course = await Course.findOne({ courseId: courseId });
+    console.log("Course in DB: ", course);
     if (!course) {
       course = await Course.findOne({ courseId: (courseId || '').toUpperCase() });
     }

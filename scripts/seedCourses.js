@@ -86,6 +86,50 @@ const coursesData = [
     }
   },
   {
+    courseId: 'FRONTEND-INTERMEDIATE',
+    title: 'Frontend Development - Intermediate',
+    category: 'Frontend Development',
+    level: 'Intermediate',
+    description: 'Learn Django fundamentals, databases (MySQL & MongoDB), API integration, environment configuration, and web security best practices. Build backend-powered web applications while strengthening frontend integration skills.',
+    price: 1950,
+    duration: '10 weeks',
+    modules: [
+      {
+        title: 'Module 1: Django Fundamentals & MVC',
+        duration: '3 weeks',
+        topics: ['Project setup', 'Apps & URL routing', 'Views & templates', 'Models & ORM']
+      },
+      {
+        title: 'Module 2: Relational & Document Databases',
+        duration: '3 weeks',
+        topics: ['MySQL schema design', 'MongoDB collections', 'Data modeling patterns', 'CRUD operations']
+      },
+      {
+        title: 'Module 3: API Integration & Environment Config',
+        duration: '2 weeks',
+        topics: ['REST APIs & requests', 'Authentication tokens', 'Environment variables (.env)', 'Config management']
+      },
+      {
+        title: 'Module 4: Web Security Best Practices',
+        duration: '2 weeks',
+        topics: ['Input validation', 'Authentication & sessions', 'CSRF protection', 'Secure deployment']
+      }
+    ],
+    prerequisites: ['Frontend beginner knowledge or equivalent', 'Basic JavaScript', 'Basic database concepts'],
+    learningOutcomes: [
+      'Use Django MVC architecture to build web apps',
+      'Design relational and document databases effectively',
+      'Integrate REST APIs with secure authentication',
+      'Manage environment configuration for deployments',
+      'Apply core web security practices in your projects'
+    ],
+    instructor: {
+      name: 'Rohan Sharma',
+      bio: 'Full Stack Developer specializing in Django and modern web development with focus on security.',
+      experience: '6+ years in Full Stack Development, Backend Specialist'
+    }
+  },
+  {
     courseId: 'FRONTEND-ADVANCED',
     title: 'Frontend Development - Advanced',
     description: 'Master advanced frontend concepts including performance optimization, advanced state management, and modern development workflows.',
@@ -220,26 +264,23 @@ async function seedCourses() {
   try {
     // Connect to MongoDB
     const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/jasnav_projects';
-    await mongoose.connect(mongoURI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    
+    await mongoose.connect(mongoURI);
+
     console.log('✅ Connected to MongoDB');
-    
+
     // Clear existing courses
     await Course.deleteMany({});
     console.log('🗑️  Cleared existing courses (including DATASCIENCE-INTERMEDIATE)');
-    
+
     // Insert new courses
     const insertedCourses = await Course.insertMany(coursesData);
     console.log(`✅ Inserted ${insertedCourses.length} courses`);
-    
+
     // Display inserted courses
     insertedCourses.forEach(course => {
       console.log(`   - ${course.courseId}: ${course.title}`);
     });
-    
+
     console.log('\n🎉 Course seeding completed successfully!');
     console.log('📚 Available courses:');
     console.log('   1. Frontend Development - Beginner');
@@ -249,7 +290,7 @@ async function seedCourses() {
     console.log('   5. DevOps - Advanced');
     console.log('   6. Mobile App Development - Advanced');
     console.log('   7. Browser Extensions Development');
-    
+
   } catch (error) {
     console.error('❌ Error seeding courses:', error);
   } finally {
