@@ -29,6 +29,8 @@ const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
   process.env.VITE_PRODUCTION_URL,
   process.env.VITE_PREVIEW_URL,
+  process.env.FRONTEND_URL,
+  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean) : []),
   'http://localhost:3000',
   'http://localhost:5173',
   'http://localhost:5174',
@@ -42,7 +44,8 @@ const corsOptions = {
     const whitelist = allowedOrigins.filter(Boolean);
     const isWhitelisted = whitelist.includes(origin)
       || /\.vercel\.app$/.test(origin)
-      || /\.railway\.app$/.test(origin);
+      || /\.railway\.app$/.test(origin)
+      || /\.github\.io$/.test(origin);
     if (isWhitelisted) return callback(null, true);
     return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
