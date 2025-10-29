@@ -5,14 +5,45 @@ const Course = require('../models/Course');
 const router = express.Router();
 
 // Utility: resolve course by human-friendly courseId or Mongo ObjectId
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 async function resolveCourseId(courseIdParam) {
   if (!courseIdParam) return null;
-  let course = await Course.findOne({ courseId: courseIdParam });
-  // Fallback: treat as ObjectId
-  if (!course && /^[0-9a-fA-F]{24}$/.test(courseIdParam)) {
-    course = await Course.findById(courseIdParam);
+  // Try ObjectId first
+  if (/^[0-9a-fA-F]{24}$/.test(courseIdParam)) {
+    const byId = await Course.findById(courseIdParam);
+    if (byId) return byId;
   }
-  return course;
+  // Exact courseId match
+  let course = await Course.findOne({ courseId: courseIdParam });
+  if (course) return course;
+  // Case-insensitive courseId
+  course = await Course.findOne({ courseId: new RegExp(`^${escapeRegex(courseIdParam)}$`, 'i') });
+  if (course) return course;
+  // Case-insensitive title match
+  course = await Course.findOne({ title: new RegExp(`^${escapeRegex(courseIdParam)}$`, 'i') });
+  if (course) return course;
+  // Synonym mapping
+  const synonyms = {
+    'frontend-beginner': ['FRONTEND-BEGINNER', 'Frontend Development - Beginner'],
+    'frontend-intermediate': ['FRONTEND-INTERMEDIATE', 'Frontend Development - Intermediate'],
+    'frontend-advanced': ['Frontend Development - Advanced'],
+    'devops-beginner': ['DEVOPS-BEGINNER', 'DevOps - Beginner'],
+    'devops-intermediate': ['DEVOPS-INTERMEDIATE', 'DevOps - Intermediate'],
+    'ai-tools-mastery': ['AI-TOOLS-MASTERY', 'AI Tools Mastery']
+  };
+  const candidates = [
+    courseIdParam,
+    courseIdParam.toLowerCase(),
+    courseIdParam.toUpperCase(),
+    ...(synonyms[courseIdParam] || [])
+  ];
+  for (const cand of candidates) {
+    course = await Course.findOne({ courseId: cand }) || await Course.findOne({ title: cand });
+    if (course) return course;
+  }
+  return null;
 }
 
 // Utility: ensure StudentProgress record exists
@@ -45,7 +76,12 @@ router.get('/course/:courseId', async (req, res) => {
       limit = 20 
     } = req.query;
 
-    let query = { courseId };
+    const course = await resolveCourseId(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    let query = { courseId: course._id };
     if (status) query.status = status;
 
     const skip = (page - 1) * limit;
@@ -62,26 +98,23 @@ router.get('/course/:courseId', async (req, res) => {
     const total = await StudentProgress.countDocuments(query);
 
     // Calculate course statistics
-    const allProgress = await StudentProgress.find({ courseId });
+    const allProgress = await StudentProgress.find({ courseId: course._id });
     const courseStats = {
       totalStudents: allProgress.length,
       completedStudents: allProgress.filter(p => p.status === 'completed').length,
       inProgressStudents: allProgress.filter(p => p.status === 'in-progress').length,
       averageProgress: Math.round(allProgress.reduce((sum, p) => sum + p.overallProgress, 0) / allProgress.length) || 0,
       averageTimeSpent: Math.round(allProgress.reduce((sum, p) => sum + p.totalTimeSpent, 0) / allProgress.length) || 0,
-      averageEngagement: Math.round(allProgress.reduce((sum, p) => sum + p.performanceMetrics.engagementScore, 0) / allProgress.length) || 0
     };
 
     res.json({
       success: true,
       data: {
         progressRecords,
-        courseStats,
-        pagination: {
-          current: parseInt(page),
-          pages: Math.ceil(total / limit),
-          total
-        }
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        courseStats
       }
     });
   } catch (error) {

@@ -8,6 +8,48 @@ const StudentProgress = require('../models/StudentProgress');
 const { authenticateStudent, authorizeOwnProfile } = require('../middleware/auth');
 const router = express.Router();
 
+// Utility: resolve course by human-friendly courseId or Mongo ObjectId
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+async function resolveCourseId(courseIdParam) {
+  if (!courseIdParam) return null;
+  // Try ObjectId first
+  if (/^[0-9a-fA-F]{24}$/.test(courseIdParam)) {
+    const byId = await Course.findById(courseIdParam);
+    if (byId) return byId;
+  }
+  // Exact courseId match
+  let course = await Course.findOne({ courseId: courseIdParam });
+  if (course) return course;
+  // Case-insensitive courseId
+  course = await Course.findOne({ courseId: new RegExp(`^${escapeRegex(courseIdParam)}$`, 'i') });
+  if (course) return course;
+  // Case-insensitive title match
+  course = await Course.findOne({ title: new RegExp(`^${escapeRegex(courseIdParam)}$`, 'i') });
+  if (course) return course;
+  // Synonym mapping
+  const synonyms = {
+    'frontend-beginner': ['FRONTEND-BEGINNER', 'Frontend Development - Beginner'],
+    'frontend-intermediate': ['FRONTEND-INTERMEDIATE', 'Frontend Development - Intermediate'],
+    'frontend-advanced': ['Frontend Development - Advanced'],
+    'devops-beginner': ['DEVOPS-BEGINNER', 'DevOps - Beginner'],
+    'devops-intermediate': ['DEVOPS-INTERMEDIATE', 'DevOps - Intermediate'],
+    'ai-tools-mastery': ['AI-TOOLS-MASTERY', 'AI Tools Mastery']
+  };
+  const candidates = [
+    courseIdParam,
+    courseIdParam.toLowerCase(),
+    courseIdParam.toUpperCase(),
+    ...(synonyms[courseIdParam] || [])
+  ];
+  for (const cand of candidates) {
+    course = await Course.findOne({ courseId: cand }) || await Course.findOne({ title: cand });
+    if (course) return course;
+  }
+  return null;
+}
+
 // Generate JWT token
 const generateToken = (studentId) => {
   return jwt.sign(
@@ -756,10 +798,15 @@ router.get('/:id/progress', authenticateStudent, authorizeOwnProfile, async (req
 router.get('/:id/progress/course/:courseId', authenticateStudent, authorizeOwnProfile, async (req, res) => {
   try {
     const { id: studentId, courseId } = req.params;
+
+    const course = await resolveCourseId(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
     
     const progress = await StudentProgress.findOne({ 
       studentId, 
-      courseId 
+      courseId: course._id
     }).populate('courseId', 'title courseId category level modules');
 
     if (!progress) {
@@ -789,8 +836,13 @@ router.post('/:id/progress/initialize', authenticateStudent, authorizeOwnProfile
     const studentId = req.params.id;
     const { courseId } = req.body;
 
+    const course = await resolveCourseId(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
     // Check if progress already exists
-    let progress = await StudentProgress.findOne({ studentId, courseId });
+    let progress = await StudentProgress.findOne({ studentId, courseId: course._id });
     
     if (progress) {
       return res.json({
@@ -800,19 +852,10 @@ router.post('/:id/progress/initialize', authenticateStudent, authorizeOwnProfile
       });
     }
 
-    // Get course details to initialize modules
-    const course = await Course.findById(courseId);
-    if (!course) {
-      return res.status(404).json({
-        success: false,
-        message: 'Course not found'
-      });
-    }
-
     // Create new progress record
     progress = new StudentProgress({
       studentId,
-      courseId,
+      courseId: course._id,
       enrollmentDate: new Date(),
       modules: course.modules.map((module, index) => ({
         moduleId: `module_${index + 1}`,
@@ -851,7 +894,12 @@ router.post('/:id/progress/session/start', authenticateStudent, authorizeOwnProf
     const studentId = req.params.id;
     const { courseId } = req.body;
 
-    const progress = await StudentProgress.findOne({ studentId, courseId });
+    const course = await resolveCourseId(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    const progress = await StudentProgress.findOne({ studentId, courseId: course._id });
     if (!progress) {
       return res.status(404).json({
         success: false,
@@ -886,7 +934,12 @@ router.post('/:id/progress/session/end', authenticateStudent, authorizeOwnProfil
     const studentId = req.params.id;
     const { courseId } = req.body;
 
-    const progress = await StudentProgress.findOne({ studentId, courseId });
+    const course = await resolveCourseId(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    const progress = await StudentProgress.findOne({ studentId, courseId: course._id });
     if (!progress) {
       return res.status(404).json({
         success: false,
@@ -929,7 +982,12 @@ router.put('/:id/progress/lesson', authenticateStudent, authorizeOwnProfile, asy
       notes 
     } = req.body;
 
-    const progress = await StudentProgress.findOne({ studentId, courseId });
+    const course = await resolveCourseId(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    const progress = await StudentProgress.findOne({ studentId, courseId: course._id });
     if (!progress) {
       return res.status(404).json({
         success: false,
@@ -1031,7 +1089,12 @@ router.put('/:id/progress/assignment', authenticateStudent, authorizeOwnProfile,
       feedback 
     } = req.body;
 
-    const progress = await StudentProgress.findOne({ studentId, courseId });
+    const course = await resolveCourseId(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    const progress = await StudentProgress.findOne({ studentId, courseId: course._id });
     if (!progress) {
       return res.status(404).json({
         success: false,
@@ -1137,7 +1200,12 @@ router.put('/:id/progress/quiz', authenticateStudent, authorizeOwnProfile, async
       answers
     } = req.body;
 
-    const progress = await StudentProgress.findOne({ studentId, courseId });
+    const course = await resolveCourseId(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    const progress = await StudentProgress.findOne({ studentId, courseId: course._id });
     if (!progress) {
       return res.status(404).json({
         success: false,
