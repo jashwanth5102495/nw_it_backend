@@ -1130,13 +1130,13 @@ router.put('/:id/progress/assignment', authenticateStudent, authorizeOwnProfile,
     if (timeSpent !== undefined) assignment.timeSpent += timeSpent;
     if (feedback) assignment.feedback = feedback;
 
-    // Auto-grade: mark completed when score > 60% of max (more than 6/10)
+    // Auto-grade: mark completed when score >= 50% of max (5/10 or more)
     if (
       typeof assignment.score === 'number' &&
       typeof assignment.maxScore === 'number'
     ) {
       const prevStatus = assignment.status;
-      const passedThreshold = assignment.score > (assignment.maxScore * 0.6);
+      const passedThreshold = assignment.score >= (assignment.maxScore * 0.5);
       if (passedThreshold && prevStatus !== 'graded') {
         assignment.status = 'graded';
         assignment.completedAt = new Date();

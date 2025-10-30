@@ -105,23 +105,84 @@ router.post('/:assignmentId/submit', authenticateStudent, async (req, res) => {
     let correctAnswers = 0;
     const detailedAnswers = [];
     
+    // Fallback map for assignments missing correctAnswer (CSS Part 2, JavaScript Part 2)
+    const fallbackCorrectAnswersMap = {
+      'frontend-beginner-5': {
+        '1': 1, '2': 1, '3': 2, '4': 1, '5': 1,
+        '6': 2, '7': 2, '8': 0, '9': 2, '10': 2
+      },
+      // JavaScript Part 2: all correct options are the second item (index 1)
+      'frontend-beginner-7': {
+        '1': 1, '2': 1, '3': 1, '4': 1, '5': 1,
+        '6': 1, '7': 1, '8': 1, '9': 1, '10': 1
+      }
+    };
+
+    const fallbackCorrectAnswers = fallbackCorrectAnswersMap[assignment.assignmentId] || null;
+
+    const debug = assignment.assignmentId === 'frontend-beginner-7';
+    if (debug) {
+      try {
+        console.log('[JS Part 2] Submit payload summary:', {
+          assignmentId,
+          totalQuestions,
+          answersKeys: Object.keys(answers || {}),
+          fallbackKeys: fallbackCorrectAnswers ? Object.keys(fallbackCorrectAnswers) : []
+        });
+      } catch (e) {
+        console.warn('[JS Part 2] Debug logging failed:', e?.message);
+      }
+    }
+
     assignment.questions.forEach(question => {
-      const selectedAnswer = answers[question.questionId];
-      const isCorrect = selectedAnswer === question.correctAnswer;
-      
+      const rawSelected = answers[question.questionId];
+      const selectedAnswer = rawSelected !== undefined && rawSelected !== null
+        ? Number(rawSelected)
+        : undefined;
+
+      const normalizedCorrect = typeof question.correctAnswer === 'number'
+        ? question.correctAnswer
+        : Number(question.correctAnswer);
+
+      const hasValidCorrect = Number.isInteger(normalizedCorrect)
+        && normalizedCorrect >= 0
+        && Array.isArray(question.options)
+        && normalizedCorrect < question.options.length;
+
+      const fallback = fallbackCorrectAnswers
+        ? fallbackCorrectAnswers[String(question.questionId)]
+        : undefined;
+
+      const finalCorrect = hasValidCorrect
+        ? normalizedCorrect
+        : (typeof fallback === 'number' ? fallback : undefined);
+
+      const isCorrect = selectedAnswer !== undefined
+        && finalCorrect !== undefined
+        && selectedAnswer === finalCorrect;
+
       if (isCorrect) {
         correctAnswers++;
       }
-      
+
+      if (debug) {
+        console.log('[JS Part 2] Q', String(question.questionId), {
+          selectedAnswer,
+          finalCorrect,
+          hasValidCorrect,
+          fallback
+        });
+      }
+
       detailedAnswers.push({
         questionId: question.questionId,
         selectedAnswer: selectedAnswer !== undefined ? selectedAnswer : -1,
         isCorrect
       });
     });
-    
+
     const percentage = (correctAnswers / totalQuestions) * 100;
-    const passed = percentage > assignment.passingPercentage;
+    const passed = percentage >= assignment.passingPercentage;
     
     // Get attempt number (how many times has this student attempted this assignment)
     const previousAttempts = await AssignmentAttempt.countDocuments({
@@ -158,7 +219,7 @@ router.post('/:assignmentId/submit', authenticateStudent, async (req, res) => {
         passingPercentage: assignment.passingPercentage,
         message: passed 
           ? '🎉 Congratulations! You passed the assignment!' 
-          : '📚 Keep learning! You need to score more than 50% to pass.'
+          : `📚 Keep learning! You need to score at least ${assignment.passingPercentage}% to pass.`
       }
     });
   } catch (error) {
