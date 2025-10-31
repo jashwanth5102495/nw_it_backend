@@ -105,11 +105,16 @@ router.post('/:assignmentId/submit', authenticateStudent, async (req, res) => {
     let correctAnswers = 0;
     const detailedAnswers = [];
     
-    // Fallback map for assignments missing correctAnswer (CSS Part 2, JavaScript Part 2)
+    // Fallback map for assignments missing correctAnswer (CSS Part 2; JavaScript Part 1 & 2)
     const fallbackCorrectAnswersMap = {
       'frontend-beginner-5': {
         '1': 1, '2': 1, '3': 2, '4': 1, '5': 1,
         '6': 2, '7': 2, '8': 0, '9': 2, '10': 2
+      },
+      // JavaScript Part 1: explicit indices from seed mapping
+      'frontend-beginner-6': {
+        '1': 0, '2': 1, '3': 2, '4': 2, '5': 1,
+        '6': 3, '7': 1, '8': 1, '9': 2, '10': 2
       },
       // JavaScript Part 2: all correct options are the second item (index 1)
       'frontend-beginner-7': {
@@ -120,17 +125,17 @@ router.post('/:assignmentId/submit', authenticateStudent, async (req, res) => {
 
     const fallbackCorrectAnswers = fallbackCorrectAnswersMap[assignment.assignmentId] || null;
 
-    const debug = assignment.assignmentId === 'frontend-beginner-7';
+    const debug = ['frontend-beginner-6', 'frontend-beginner-7'].includes(assignment.assignmentId);
     if (debug) {
       try {
-        console.log('[JS Part 2] Submit payload summary:', {
+        console.log('[Scoring Debug] Submit payload summary:', {
           assignmentId,
           totalQuestions,
           answersKeys: Object.keys(answers || {}),
           fallbackKeys: fallbackCorrectAnswers ? Object.keys(fallbackCorrectAnswers) : []
         });
       } catch (e) {
-        console.warn('[JS Part 2] Debug logging failed:', e?.message);
+        console.warn('[Scoring Debug] Logging failed:', e?.message);
       }
     }
 
@@ -166,7 +171,7 @@ router.post('/:assignmentId/submit', authenticateStudent, async (req, res) => {
       }
 
       if (debug) {
-        console.log('[JS Part 2] Q', String(question.questionId), {
+        console.log('[Scoring Debug] Q', String(question.questionId), {
           selectedAnswer,
           finalCorrect,
           hasValidCorrect,
