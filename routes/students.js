@@ -51,9 +51,9 @@ async function resolveCourseId(courseIdParam) {
 }
 
 // Generate JWT token
-const generateToken = (studentId) => {
+const generateToken = (userId, studentId) => {
   return jwt.sign(
-    { studentId, type: 'student' },
+    { userId, studentId, type: 'student' },
     process.env.JWT_SECRET || 'your-secret-key',
     { expiresIn: '7d' }
   );
@@ -126,7 +126,7 @@ router.post('/register', async (req, res) => {
     await student.save();
 
     // Generate token
-    const token = generateToken(user._id);
+    const token = generateToken(user._id, student._id);
 
     res.status(201).json({
       success: true,
@@ -195,7 +195,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Generate token
-    const token = generateToken(user._id);
+    const token = generateToken(user._id, student._id);
 
     res.json({
       success: true,

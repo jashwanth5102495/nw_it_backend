@@ -1,4 +1,4 @@
-﻿[
+[
     {
         "assignmentId":  "frontend-beginner-4",
         "courseId":  null,
@@ -2534,5 +2534,149 @@
                               "correctAnswer":  1
                           }
                       ]
+    },
+    {
+      "assignmentId": "frontend-intermediate-1",
+      "courseId": "frontend-intermediate",
+      "title": "Modern JavaScript Patterns",
+      "description": "Deep dive into ES6+ features, modules, async/await, and error handling.",
+      "topics": [
+        { "topicId": "es-modules", "title": "ES Modules", "content": "import/export, default vs named, tree shaking" },
+        { "topicId": "async-await", "title": "Async/Await", "content": "promise wrapping, error handling with try/catch" },
+        { "topicId": "patterns", "title": "Patterns", "content": "factory, singleton, observer basics in JS" }
+      ],
+      "questions": [
+        { "questionId": "1", "prompt": "Which statement imports a named export?", "options": ["import x from 'lib'", "import { x } from 'lib'", "require('lib')", "import * as lib from 'lib'"], "correctAnswer": 1 },
+        { "questionId": "2", "prompt": "Async/await is built on which feature?", "options": ["Generators", "Promises", "Callbacks", "Observables"], "correctAnswer": 1 },
+        { "questionId": "3", "prompt": "Which pattern notifies subscribers on changes?", "options": ["Observer", "Factory", "Strategy", "Adapter"], "correctAnswer": 0 },
+        { "questionId": "4", "prompt": "A default export is imported via?", "options": ["import { default } from 'x'", "import x from 'x'", "import * as x from 'x'", "import default from 'x'"], "correctAnswer": 1 },
+        { "questionId": "5", "prompt": "Best way to handle async errors?", "options": ["ignore", "try/catch around await", "setTimeout", "global catch-all"], "correctAnswer": 1 },
+        { "questionId": "6", "prompt": "Which export allows multiple named values?", "options": ["default export", "named exports", "class export", "var export"], "correctAnswer": 1 },
+        { "questionId": "7", "prompt": "Which keyword creates a module boundary in JS?", "options": ["module", "export/import", "package", "library"], "correctAnswer": 1 },
+        { "questionId": "8", "prompt": "Error handling for async functions should use?", "options": ["try/catch", "finally only", "then without catch", "window.onerror"], "correctAnswer": 0 },
+        { "questionId": "9", "prompt": "Which pattern creates one shared instance?", "options": ["Observer", "Singleton", "Strategy", "Facade"], "correctAnswer": 1 },
+        { "questionId": "10", "prompt": "The observer pattern typically includes?", "options": ["subjects and observers", "reducers and actions", "controllers and routes", "producers and consumers"], "correctAnswer": 0 }
+      ],
+      "passingPercentage": 60
+    },
+    {
+      "assignmentId": "frontend-intermediate-2",
+      "courseId": "frontend-intermediate",
+      "title": "Advanced CSS and Styling",
+      "description": "Flexbox, Grid, animations, responsive design, and theming.",
+      "topics": [
+        { "topicId": "flexbox-advanced", "title": "Flexbox Advanced", "content": "alignment, wrapping, ordering" },
+        { "topicId": "grid-layout", "title": "CSS Grid", "content": "areas, auto-placement, fr units" },
+        { "topicId": "animations", "title": "Animations", "content": "keyframes, transitions, performance tips" }
+      ],
+      "questions": [
+        { "questionId": "1", "prompt": "Which unit is common in Grid?", "options": ["px", "fr", "%", "em"], "correctAnswer": 1 },
+        { "questionId": "2", "prompt": "Flex alignment uses?", "options": ["justify-content", "grid-areas", "column-span", "float"], "correctAnswer": 0 },
+        { "questionId": "3", "prompt": "Which improves animation performance?", "options": ["layout thrashing", "transform/opacity", "box-shadow only", "heavy reflow"], "correctAnswer": 1 },
+        { "questionId": "4", "prompt": "Responsive design uses?", "options": ["media queries", "@supports", "@document", "iframes"], "correctAnswer": 0 },
+        { "questionId": "5", "prompt": "Theming often uses?", "options": ["inline styles", "CSS variables", "tables", "id selectors"], "correctAnswer": 1 },
+        { "questionId": "6", "prompt": "Grid template areas help with?", "options": ["naming layout regions", "JavaScript timers", "SVG filters", "HTTP caching"], "correctAnswer": 0 },
+        { "questionId": "7", "prompt": "Flex wrap controls?", "options": ["line breaking of items", "font weight", "overflow-x", "z-index"], "correctAnswer": 0 },
+        { "questionId": "8", "prompt": "Keyframes define?", "options": ["animation steps", "font fallback", "grid gutters", "image sprites"], "correctAnswer": 0 },
+        { "questionId": "9", "prompt": "CSS variables are scoped to?", "options": [":root and selectors", "global only", "script tags", "media queries only"], "correctAnswer": 0 },
+        { "questionId": "10", "prompt": "Which helps avoid layout jank?", "options": ["transform instead of top/left", "using tables", "absolute positioning always", "font-size animations"], "correctAnswer": 0 }
+      ],
+      "passingPercentage": 60
+    },
+    {
+      "assignmentId": "frontend-intermediate-3",
+      "courseId": "frontend-intermediate",
+      "title": "TypeScript Fundamentals",
+      "description": "Types, interfaces, generics, enums, and tooling setup.",
+      "topics": [
+        { "topicId": "types-basics", "title": "Types Basics", "content": "primitives, arrays, unions" },
+        { "topicId": "interfaces", "title": "Interfaces", "content": "shape contracts, optional properties" },
+        { "topicId": "generics", "title": "Generics", "content": "type parameters, constraints" }
+      ],
+      "questions": [
+        { "questionId": "1", "prompt": "Which file extension for TS?", "options": [".js", ".ts", ".jsx", ".tsx"], "correctAnswer": 1 },
+        { "questionId": "2", "prompt": "A union type looks like?", "options": ["string | number", "string & number", "string[]", "{a: string} | null"], "correctAnswer": 0 },
+        { "questionId": "3", "prompt": "Interfaces describe?", "options": ["values", "object shape", "runtime only", "HTTP headers"], "correctAnswer": 1 },
+        { "questionId": "4", "prompt": "Generics add?", "options": ["type parameters", "runtime classes", "DOM", "CSS"], "correctAnswer": 0 },
+        { "questionId": "5", "prompt": "Enum represents?", "options": ["dynamic keys", "set of named constants", "arrays", "HTML tags"], "correctAnswer": 1 },
+        { "questionId": "6", "prompt": "Which enforces shape without implementation?", "options": ["interface", "class", "namespace", "module"], "correctAnswer": 0 },
+        { "questionId": "7", "prompt": "Generic function syntax includes?", "options": ["<T>", "{T}", "(T)", "[T]"], "correctAnswer": 0 },
+        { "questionId": "8", "prompt": "Type narrowing can be done via?", "options": ["typeof checks", "console.log", "alert", "Math.random"], "correctAnswer": 0 },
+        { "questionId": "9", "prompt": "Which compiles TS to JS?", "options": ["ts-node runtime only", "TypeScript compiler (tsc)", "Bash", "CSS"], "correctAnswer": 1 },
+        { "questionId": "10", "prompt": "Which helps avoid any usage?", "options": ["strict mode", "loose mode", "never type", "empty interfaces"], "correctAnswer": 0 }
+      ],
+      "passingPercentage": 60
+    },
+    {
+      "assignmentId": "frontend-intermediate-4",
+      "courseId": "frontend-intermediate",
+      "title": "React Essentials",
+      "description": "Hooks, component patterns, props/state, and effects.",
+      "topics": [
+        { "topicId": "hooks-basics", "title": "Hooks Basics", "content": "useState, useEffect, rules of hooks" },
+        { "topicId": "props-state", "title": "Props & State", "content": "data flow, immutability" },
+        { "topicId": "composition", "title": "Composition", "content": "component reuse patterns" }
+      ],
+      "questions": [
+        { "questionId": "1", "prompt": "What triggers re-renders?", "options": ["state changes", "CSS changes", "comments", "console logs"], "correctAnswer": 0 },
+        { "questionId": "2", "prompt": "Effect dependencies go in?", "options": ["return", "dependency array", "CSS", "JSX"], "correctAnswer": 1 },
+        { "questionId": "3", "prompt": "Props are?", "options": ["mutable", "immutable", "only numbers", "global"], "correctAnswer": 1 },
+        { "questionId": "4", "prompt": "Avoid prop drilling using?", "options": ["Context", "alerts", "styles", "iframes"], "correctAnswer": 0 },
+        { "questionId": "5", "prompt": "Key helps with?", "options": ["styling", "list reconciliation", "routing", "networking"], "correctAnswer": 1 },
+        { "questionId": "6", "prompt": "Which hook handles memoized values?", "options": ["useState", "useMemo", "useEffect", "useRef"], "correctAnswer": 1 },
+        { "questionId": "7", "prompt": "Which improves performance for expensive renders?", "options": ["useCallback", "useId", "useLayoutEffect", "useReducer"], "correctAnswer": 0 },
+        { "questionId": "8", "prompt": "Keys should be?", "options": ["unique and stable", "random each render", "index always", "id attribute only"], "correctAnswer": 0 },
+        { "questionId": "9", "prompt": "Props flow?", "options": ["top-down", "bottom-up", "circular", "random"], "correctAnswer": 0 },
+        { "questionId": "10", "prompt": "Effect cleanup runs when?", "options": ["before next effect", "on mount", "never", "on CSS change"], "correctAnswer": 0 }
+      ],
+      "passingPercentage": 60
+    },
+    {
+      "assignmentId": "frontend-intermediate-5",
+      "courseId": "frontend-intermediate",
+      "title": "Frontend Tooling and Build Systems",
+      "description": "Vite/Webpack, Babel, linting, formatting, and basic testing.",
+      "topics": [
+        { "topicId": "vite", "title": "Vite", "content": "fast dev server, build config" },
+        { "topicId": "babel", "title": "Babel", "content": "transpilation, presets, plugins" },
+        { "topicId": "eslint", "title": "ESLint", "content": "lint rules, plugins" }
+      ],
+      "questions": [
+        { "questionId": "1", "prompt": "Which tool provides fast HMR?", "options": ["Webpack 3", "Vite", "Rollup only", "Parcel"], "correctAnswer": 1 },
+        { "questionId": "2", "prompt": "Babel primarily does?", "options": ["minify", "transpile", "serve HTML", "bundle images"], "correctAnswer": 1 },
+        { "questionId": "3", "prompt": "Linting catches?", "options": ["styling only", "code quality issues", "network calls", "only typos"], "correctAnswer": 1 },
+        { "questionId": "4", "prompt": "Prettier is for?", "options": ["formatting", "testing", "routing", "state"], "correctAnswer": 0 },
+        { "questionId": "5", "prompt": "Testing library focuses on?", "options": ["DOM-centric tests", "E2E only", "Server tests", "CSS only"], "correctAnswer": 0 },
+        { "questionId": "6", "prompt": "Which config file often defines tooling?", "options": ["package.json", "index.html", "README.md", "styles.css"], "correctAnswer": 0 },
+        { "questionId": "7", "prompt": "Source maps help with?", "options": ["debugging compiled code", "database access", "image optimization", "route matching"], "correctAnswer": 0 },
+        { "questionId": "8", "prompt": "ESLint can enforce?", "options": ["code style and rules", "HTTP headers", "DNS records", "image sizes"], "correctAnswer": 0 },
+        { "questionId": "9", "prompt": "Jest or Vitest are used for?", "options": ["unit/integration tests", "CSS animation", "server logging", "API gateways"], "correctAnswer": 0 },
+        { "questionId": "10", "prompt": "HMR stands for?", "options": ["Hot Module Replacement", "Hypertext Module Router", "High Memory Runtime", "Host Map Resolver"], "correctAnswer": 0 }
+      ],
+      "passingPercentage": 60
+    },
+    {
+      "assignmentId": "frontend-intermediate-6",
+      "courseId": "frontend-intermediate",
+      "title": "State Management and Data Fetching",
+      "description": "Context, state libraries, async data, caching, and patterns.",
+      "topics": [
+        { "topicId": "context", "title": "Context API", "content": "global state via providers" },
+        { "topicId": "state-libs", "title": "State Libraries", "content": "Redux-like patterns" },
+        { "topicId": "data-fetching", "title": "Data Fetching", "content": "fetch, SWR/react-query basics" }
+      ],
+      "questions": [
+        { "questionId": "1", "prompt": "Context solves?", "options": ["styling", "prop drilling", "routing", "CSS specificity"], "correctAnswer": 1 },
+        { "questionId": "2", "prompt": "React Query provides?", "options": ["caching & retries", "only fetch", "DOM helpers", "CSS reset"], "correctAnswer": 0 },
+        { "questionId": "3", "prompt": "Redux pattern centers around?", "options": ["mutable state", "immutable store and actions", "DOM nodes", "CSS variables"], "correctAnswer": 1 },
+        { "questionId": "4", "prompt": "SWR stands for?", "options": ["Stale-While-Revalidate", "Simple Web Requests", "State While Render", "Server Web Response"], "correctAnswer": 0 },
+        { "questionId": "5", "prompt": "Best practice for fetch errors?", "options": ["ignore", "graceful error UI", "throw in render", "alert only"], "correctAnswer": 1 },
+        { "questionId": "6", "prompt": "React Query tracks?", "options": ["query keys", "CSS selectors", "URL fragments", "JSX attributes"], "correctAnswer": 0 },
+        { "questionId": "7", "prompt": "Context should be provided via?", "options": ["Provider component", "global variable", "window object", "CSS file"], "correctAnswer": 0 },
+        { "questionId": "8", "prompt": "Redux actions are?", "options": ["plain objects", "DOM nodes", "CSS classes", "media queries"], "correctAnswer": 0 },
+        { "questionId": "9", "prompt": "Which improves data fetching UX?", "options": ["loading states", "disable errors", "re-render loops", "blocking UI"], "correctAnswer": 0 },
+        { "questionId": "10", "prompt": "SWR/React Query avoid stale data by?", "options": ["stale-while-revalidate", "reloading the page", "CSS animations", "disabling cache"], "correctAnswer": 0 }
+      ],
+      "passingPercentage": 60
     }
 ]

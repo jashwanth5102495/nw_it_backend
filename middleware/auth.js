@@ -14,7 +14,8 @@ const authenticateStudent = async (req, res, next) => {
     }
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-    console.log("Token: ", token);
+    console.log('Token: ', token);
+
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
 
@@ -37,8 +38,8 @@ const authenticateStudent = async (req, res, next) => {
         });
       }
 
-      // Use studentId from decoded token (which is actually the user_id)
-      const userIdFromToken = decoded.studentId;
+      // Prefer explicit userId in token; fallback to studentId for backward compatibility
+      const userIdFromToken = decoded.userId || decoded.studentId;
       console.log('Using user ID from token for student lookup:', userIdFromToken);
 
       // Verify student exists using user_id reference
