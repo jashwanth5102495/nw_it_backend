@@ -126,40 +126,93 @@ router.get('/course/:courseId', async (req, res) => {
     const sortOptions = {};
     sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
 
-    const progressRecords = await StudentProgress.find(query)
+    let progressRecords = await StudentProgress.find(query)
       .populate('studentId', 'firstName lastName email studentId')
       .populate('courseId', 'title courseId category level')
       .sort(sortOptions)
       .skip(skip)
       .limit(parseInt(limit));
 
-    const total = await StudentProgress.countDocuments(query);
+    let total = await StudentProgress.countDocuments(query);
 
-    // Calculate course statistics
+    // Strict completion check: require >=4 projects (module submissions) AND >=6 graded assignments
+    const studentIds = progressRecords.map(p => p.studentId);
+    const students = await Student.find({ _id: { $in: studentIds } }).select('enrolledCourses');
+    const enrollmentsByStudent = new Map(
+      students.map(s => [s._id.toString(), s.enrolledCourses || []])
+    );
+
+    const strictInfoByProgressId = new Map();
+    for (const p of progressRecords) {
+      const assignmentsCompleted = (p.modules || []).reduce((sum, m) => {
+        return sum + ((m.assignments || []).filter(a => a.status === 'graded').length);
+      }, 0);
+
+      const enrollments = enrollmentsByStudent.get(p.studentId.toString()) || [];
+      const enrollment = enrollments.find(e => e.courseId?.toString() === course._id.toString());
+      const projectsCompleted = enrollment?.completedModules?.length || 0;
+
+      const strictCompleted = projectsCompleted >= 4 && assignmentsCompleted >= 6;
+      strictInfoByProgressId.set(p._id.toString(), { assignmentsCompleted, projectsCompleted, strictCompleted });
+    }
+
+    // If requesting completed students, enforce strict completion filtering
+    if (status === 'completed') {
+      progressRecords = progressRecords.filter(p => strictInfoByProgressId.get(p._id.toString())?.strictCompleted);
+      total = progressRecords.length; // adjust total to reflect strict filter in this page
+    }
+
+    // Calculate course statistics with strict completion
     const allProgress = await StudentProgress.find({ courseId: course._id });
+    const allStudentIds = allProgress.map(p => p.studentId);
+    const allStudents = await Student.find({ _id: { $in: allStudentIds } }).select('enrolledCourses');
+    const allEnrollmentsByStudent = new Map(
+      allStudents.map(s => [s._id.toString(), s.enrolledCourses || []])
+    );
+
+    const completedStudentsStrict = allProgress.filter(p => {
+      const assignmentsCompleted = (p.modules || []).reduce((sum, m) => sum + ((m.assignments || []).filter(a => a.status === 'graded').length), 0);
+      const enrollments = allEnrollmentsByStudent.get(p.studentId.toString()) || [];
+      const enrollment = enrollments.find(e => e.courseId?.toString() === course._id.toString());
+      const projectsCompleted = enrollment?.completedModules?.length || 0;
+      return projectsCompleted >= 4 && assignmentsCompleted >= 6;
+    }).length;
+
     const courseStats = {
       totalStudents: allProgress.length,
-      completedStudents: allProgress.filter(p => p.status === 'completed').length,
+      completedStudents: completedStudentsStrict,
       inProgressStudents: allProgress.filter(p => p.status === 'in-progress').length,
-      averageProgress: Math.round(allProgress.reduce((sum, p) => sum + p.overallProgress, 0) / allProgress.length) || 0,
-      averageTimeSpent: Math.round(allProgress.reduce((sum, p) => sum + p.totalTimeSpent, 0) / allProgress.length) || 0,
     };
 
-    res.json({
+    // Attach strict completion info to returned records
+    const recordsWithStrict = progressRecords.map(p => {
+      const info = strictInfoByProgressId.get(p._id.toString());
+      return {
+        ...p.toObject(),
+        strictCompletion: {
+          isCompleted: info?.strictCompleted || false,
+          assignmentsCompleted: info?.assignmentsCompleted || 0,
+          projectsCompleted: info?.projectsCompleted || 0
+        }
+      };
+    });
+
+    return res.json({
       success: true,
       data: {
-        progressRecords,
+        progressRecords: recordsWithStrict,
         total,
-        page: parseInt(page),
-        limit: parseInt(limit),
         courseStats
       }
     });
   } catch (error) {
-    console.error('Error fetching course progress overview:', error);
-    res.status(500).json({ success: false, message: 'Error fetching course progress overview', error: error.message });
+    console.error('Error fetching course progress:', error);
+    return res.status(500).json({ success: false, message: 'Error fetching course progress', error: error.message });
   }
 });
+
+// Calculate course statistics
+
 
 // Get progress analytics for all courses (Admin Dashboard)
 router.get('/analytics/overview', async (req, res) => {
