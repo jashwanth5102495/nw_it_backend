@@ -87,6 +87,8 @@ app.use('/api/auth', authRoutes); // Auth routes have their own rate limiting
 // Serve static uploaded certificates
 const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve frontend certificates directory under a public path to avoid mixed-content/host issues
+app.use('/video-explanations', express.static(path.join(__dirname, '..', 'nw_it_frontend', 'video-explanations')));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

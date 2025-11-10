@@ -6,6 +6,15 @@ const multer = require('multer');
 const Certificate = require('../models/Certificate');
 const Student = require('../models/Student');
 
+// Helper to build a public HTTPS base URL from the incoming request or env
+const getPublicBase = (req) => {
+  const envUrl = (process.env.VITE_FRONTEND_URL || process.env.FRONTEND_PUBLIC_URL || '').trim();
+  if (envUrl) return envUrl.replace(/\/+$/, '');
+  const proto = (req.headers['x-forwarded-proto'] || req.protocol || 'http');
+  const host = (req.headers['x-forwarded-host'] || req.get('host'));
+  return `${proto}://${host}`;
+};
+
 // Ensure frontend certificates directory exists (store uploads under frontend project)
 const uploadDir = path.join(__dirname, '..', '..', 'nw_it_frontend', 'video-explanations', 'topics', 'certificates');
 fs.mkdirSync(uploadDir, { recursive: true });
@@ -40,13 +49,14 @@ router.post('/upload', upload.single('certificate'), async (req, res) => {
   try {
     const { studentId, courseId } = req.body;
     if (!studentId) return res.status(400).json({ success: false, message: 'studentId is required' });
+
     if (!req.file) return res.status(400).json({ success: false, message: 'certificate file is required' });
 
     const student = await Student.findOne({ studentId });
     if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
 
     const filePath = path.join('video-explanations', 'topics', 'certificates', req.file.filename);
-    const baseUrl = process.env.VITE_FRONTEND_URL || `http://localhost:${process.env.FRONTEND_PORT || 5174}`;
+    const baseUrl = getPublicBase(req);
     const fileUrl = `${baseUrl}/${filePath.replace(/\\/g, '/')}`;
 
     // Deactivate previous active certificate for student
@@ -79,7 +89,7 @@ router.get('/verify/:studentId', async (req, res) => {
 
     // Prefer a frontend certificate file mapped by studentId if present
     const frontendDir = path.join(__dirname, '..', '..', 'nw_it_frontend', 'video-explanations', 'topics', 'certificates');
-    const frontendBase = process.env.VITE_FRONTEND_URL || `http://localhost:${process.env.FRONTEND_PORT || 5174}`;
+    const frontendBase = getPublicBase(req);
     const candidates = ['.png', '.jpg', '.jpeg', '.pdf'].map(ext => path.join(frontendDir, `${cert.studentIdString}${ext}`));
     let resolvedUrl = cert.fileUrl;
     let resolvedMime = cert.mimeType;
