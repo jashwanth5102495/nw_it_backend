@@ -9,6 +9,7 @@ const facultyRoutes = require('./routes/faculty');
 const progressRoutes = require('./routes/progress');
 const analyticsRoutes = require('./routes/analytics');
 const assignmentRoutes = require('./routes/assignments');
+const certificatesRoutes = require('./routes/certificates');
 const { router: authRoutes } = require('./routes/auth');
 const { 
   securityHeaders, 
@@ -77,9 +78,15 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/faculty', facultyRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/assignments', assignmentRoutes);
+// Certificates routes (public verify endpoint; upload can be admin protected later)
+app.use('/api/certificates', certificatesRoutes);
 // Keep analytics behind admin protection
 app.use('/api/analytics', adminLimiter, authenticateAdmin, analyticsRoutes);
 app.use('/api/auth', authRoutes); // Auth routes have their own rate limiting
+
+// Serve static uploaded certificates
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

@@ -2,6 +2,8 @@ const express = require('express');
 const StudentProgress = require('../models/StudentProgress');
 const Student = require('../models/Student');
 const Course = require('../models/Course');
+const Assignment = require('../models/Assignment');
+const AssignmentAttempt = require('../models/AssignmentAttempt');
 const router = express.Router();
 
 // Utility: resolve course by human-friendly courseId or Mongo ObjectId
@@ -118,12 +120,8 @@ router.get('/course/:courseId', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error fetching course progress:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching course progress',
-      error: error.message
-    });
+    console.error('Error fetching course progress overview:', error);
+    res.status(500).json({ success: false, message: 'Error fetching course progress overview', error: error.message });
   }
 });
 
@@ -664,29 +662,73 @@ router.get('/student/:studentId/course/:courseId/summary', async (req, res) => {
     }
 
     const progress = await StudentProgress.findOne({ studentId, courseId: course._id });
-    if (!progress) {
-      return res.json({ success: true, data: { assignments: { completed: 0, total: 0, list: [] }, quizzes: { completed: 0, total: 0, list: [] } } });
-    }
-
+    // Base counts from StudentProgress (if present)
     let assignmentTotal = 0;
     let assignmentCompleted = 0;
-    const assignmentList = [];
+    let assignmentList = [];
     let quizTotal = 0;
     let quizCompleted = 0;
-    const quizList = [];
+    let quizList = [];
 
-    for (const mod of progress.modules || []) {
-      // Assignments
-      for (const a of mod.assignments || []) {
-        assignmentTotal += 1;
-        if (a.status === 'graded') assignmentCompleted += 1;
-        assignmentList.push({ title: a.assignmentTitle, status: a.status, score: a.score });
+    if (progress) {
+      for (const mod of progress.modules || []) {
+        // Assignments
+        for (const a of mod.assignments || []) {
+          assignmentTotal += 1;
+          if (a.status === 'graded') assignmentCompleted += 1;
+          assignmentList.push({ title: a.assignmentTitle, status: a.status, score: a.score });
+        }
+        // Quizzes
+        for (const q of mod.quizzes || []) {
+          quizTotal += 1;
+          if (q.status === 'completed') quizCompleted += 1;
+          quizList.push({ title: q.quizTitle, status: q.status, score: q.bestScore });
+        }
       }
-      // Quizzes
-      for (const q of mod.quizzes || []) {
-        quizTotal += 1;
-        if (q.status === 'completed') quizCompleted += 1;
-        quizList.push({ title: q.quizTitle, status: q.status, score: q.bestScore });
+    }
+
+    // Fallback aggregation from AssignmentAttempt + Assignment definitions
+    // Useful when StudentProgress modules were not recorded by the client
+    const courseKey = normalizeCourseKeyFromCourse(course);
+    if (courseKey) {
+      const idPrefixRegex = new RegExp(`^${escapeRegex(courseKey)}-`, 'i');
+
+      // Load all assignments for the course by ID prefix
+      const allAssignments = await Assignment.find({ assignmentId: idPrefixRegex }).lean();
+      const attempts = await AssignmentAttempt.find({ studentId, assignmentId: idPrefixRegex }).sort({ createdAt: -1 }).lean();
+
+      if (Array.isArray(allAssignments) && allAssignments.length > 0) {
+        const bestByAssignment = new Map();
+        for (const at of attempts) {
+          const prev = bestByAssignment.get(at.assignmentId);
+          if (!prev || (at.percentage || 0) > (prev.percentage || 0)) {
+            bestByAssignment.set(at.assignmentId, at);
+          }
+        }
+
+        const attemptedIds = new Set(attempts.map(a => a.assignmentId));
+        const totalByDefs = allAssignments.length;
+        const completedByAttempts = attemptedIds.size; // Treat any attempt as completion
+
+        // Build list with status from best attempt per assignment
+        const listFromAttempts = allAssignments.map(def => {
+          const best = bestByAssignment.get(def.assignmentId);
+          const status = best ? (best.passed ? 'passed' : 'attempted') : 'pending';
+          const score = best ? best.percentage : 0;
+          return { title: def.title || def.assignmentId, status, score };
+        });
+
+        // Prefer StudentProgress counts if they exist; otherwise use attempts-based
+        if (assignmentTotal === 0 && assignmentList.length === 0) {
+          assignmentTotal = totalByDefs;
+          assignmentCompleted = completedByAttempts;
+          assignmentList = listFromAttempts;
+        } else {
+          // Merge totals sensibly
+          assignmentTotal = Math.max(assignmentTotal, totalByDefs);
+          assignmentCompleted = Math.max(assignmentCompleted, completedByAttempts);
+          if (assignmentList.length === 0) assignmentList = listFromAttempts;
+        }
       }
     }
 
