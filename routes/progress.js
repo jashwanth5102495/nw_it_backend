@@ -48,6 +48,42 @@ async function resolveCourseId(courseIdParam) {
   return null;
 }
 
+// Map a Course document to a normalized course key used by assignmentId prefixes
+function normalizeCourseKeyFromCourse(course) {
+  if (!course) return null;
+  const cid = (course.courseId || '').trim();
+  const title = (course.title || '').trim().toLowerCase();
+
+  // Prefer courseId when present
+  if (cid) {
+    const key = cid.trim().toLowerCase();
+    // Normalize common variants
+    const synonyms = {
+      'frontend development - beginner': 'frontend-beginner',
+      'frontend development - intermediate': 'frontend-intermediate',
+      'frontend development - advanced': 'frontend-advanced',
+      'devops - beginner': 'devops-beginner',
+      'devops - intermediate': 'devops-intermediate',
+      'ai tools mastery': 'ai-tools-mastery',
+      'a.i tools mastery': 'ai-tools-mastery'
+    };
+    if (synonyms[key]) return synonyms[key];
+    return key; // e.g. 'frontend-beginner', 'ai-tools-mastery'
+  }
+
+  // Fallback based on title
+  const titleMap = {
+    'frontend development - beginner': 'frontend-beginner',
+    'frontend development - intermediate': 'frontend-intermediate',
+    'frontend development - advanced': 'frontend-advanced',
+    'devops - beginner': 'devops-beginner',
+    'devops - intermediate': 'devops-intermediate',
+    'ai tools mastery': 'ai-tools-mastery',
+    'a.i tools mastery': 'ai-tools-mastery'
+  };
+  return titleMap[title] || null;
+}
+
 // Utility: ensure StudentProgress record exists
 async function getOrCreateProgress(studentId, courseDoc) {
   let progress = await StudentProgress.findOne({ studentId, courseId: courseDoc._id });
