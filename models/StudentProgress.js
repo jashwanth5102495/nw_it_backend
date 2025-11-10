@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Student = require('./Student');
 
 const lessonProgressSchema = new mongoose.Schema({
   lessonId: {
@@ -474,9 +475,57 @@ studentProgressSchema.statics.getProgressByCourse = async function(courseId) {
 };
 
 // Pre-save middleware
-studentProgressSchema.pre('save', function(next) {
+studentProgressSchema.pre('save', async function(next) {
+  // Keep existing computations
   this.updateOverallProgress();
   this.updatePerformanceMetrics();
+
+  try {
+    // Count graded assignments from StudentProgress
+    const assignmentsCompleted = (this.modules || []).reduce((sum, m) => {
+      const count = (m.assignments || []).filter(a => a.status === 'graded').length;
+      return sum + count;
+    }, 0);
+
+    // Count project submissions from Student.enrolledCourses for this course
+    const student = await Student.findById(this.studentId).select('enrolledCourses');
+    const enrollment = student?.enrolledCourses?.find(e => e.courseId?.toString() === this.courseId?.toString());
+    const projectsCompleted = enrollment?.completedModules?.length || 0;
+
+    const meetsStrict = projectsCompleted >= 4 && assignmentsCompleted >= 6;
+
+    // Enforce strict completion criteria
+    if (this.overallProgress === 0) {
+      this.status = 'not-started';
+      this.completedAt = null;
+    } else if (this.overallProgress === 100) {
+      if (meetsStrict) {
+        this.status = 'completed';
+        if (!this.completedAt) this.completedAt = new Date();
+      } else {
+        // Progress may be 100 by module math, but strict completion not met
+        this.status = 'in-progress';
+        this.completedAt = null;
+      }
+    } else {
+      this.status = 'in-progress';
+      this.completedAt = null;
+    }
+  } catch (err) {
+    // If any lookup fails, keep conservative status based on progress
+    if (this.overallProgress === 0) {
+      this.status = 'not-started';
+      this.completedAt = null;
+    } else if (this.overallProgress === 100) {
+      // Without strict check, do not mark completed
+      this.status = 'in-progress';
+      this.completedAt = null;
+    } else {
+      this.status = 'in-progress';
+      this.completedAt = null;
+    }
+  }
+
   next();
 });
 

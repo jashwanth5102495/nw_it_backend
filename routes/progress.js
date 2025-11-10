@@ -833,3 +833,58 @@ router.get('/student/:studentId/course/:courseId/summary', async (req, res) => {
     return res.status(500).json({ success: false, message: 'Error fetching course summary', error: error.message });
   }
 });
+
+// Recompute strict completion status for all students in a course
+router.post('/course/:courseId/recompute-status', async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const course = await resolveCourseId(courseId);
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Course not found' });
+    }
+
+    const progressRecords = await StudentProgress.find({ courseId: course._id });
+    const studentIds = progressRecords.map(p => p.studentId);
+    const students = await Student.find({ _id: { $in: studentIds } }).select('enrolledCourses');
+    const enrollmentsByStudent = new Map(
+      students.map(s => [s._id.toString(), s.enrolledCourses || []])
+    );
+
+    let updated = 0;
+    for (const p of progressRecords) {
+      const assignmentsCompleted = (p.modules || []).reduce((sum, m) => sum + ((m.assignments || []).filter(a => a.status === 'graded').length), 0);
+      const enrollments = enrollmentsByStudent.get(p.studentId.toString()) || [];
+      const enrollment = enrollments.find(e => e.courseId?.toString() === course._id.toString());
+      const projectsCompleted = enrollment?.completedModules?.length || 0;
+      const meetsStrict = projectsCompleted >= 4 && assignmentsCompleted >= 6;
+
+      // Derive status from current overallProgress and strict
+      const originalStatus = p.status;
+      if (p.overallProgress === 0) {
+        p.status = 'not-started';
+        p.completedAt = null;
+      } else if (p.overallProgress === 100) {
+        if (meetsStrict) {
+          p.status = 'completed';
+          if (!p.completedAt) p.completedAt = new Date();
+        } else {
+          p.status = 'in-progress';
+          p.completedAt = null;
+        }
+      } else {
+        p.status = 'in-progress';
+        p.completedAt = null;
+      }
+
+      if (p.status !== originalStatus) {
+        updated += 1;
+      }
+      await p.save();
+    }
+
+    return res.json({ success: true, message: 'Statuses recomputed', data: { total: progressRecords.length, updated } });
+  } catch (error) {
+    console.error('Error recomputing statuses:', error);
+    return res.status(500).json({ success: false, message: 'Error recomputing statuses', error: error.message });
+  }
+});
