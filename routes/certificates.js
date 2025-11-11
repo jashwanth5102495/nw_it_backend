@@ -73,6 +73,14 @@ router.post('/upload', upload.single('certificate'), async (req, res) => {
       active: true
     });
 
+    // Mark certificateIssued on the matching enrollment for this course
+    if (courseId) {
+      await Student.updateOne(
+        { _id: student._id, 'enrolledCourses.courseId': courseId },
+        { $set: { 'enrolledCourses.$.certificateIssued': true } }
+      );
+    }
+
     return res.json({ success: true, certificate: cert });
   } catch (err) {
     console.error('Certificate upload error:', err);
