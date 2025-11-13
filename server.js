@@ -11,6 +11,7 @@ const analyticsRoutes = require('./routes/analytics');
 const assignmentRoutes = require('./routes/assignments');
 const certificatesRoutes = require('./routes/certificates');
 const { router: authRoutes } = require('./routes/auth');
+const User = require('./models/User');
 const { 
   securityHeaders, 
   preventSQLInjection, 
@@ -121,6 +122,8 @@ app.use('*', (req, res) => {
 app.listen(PORT, async () => {
   try {
     await db.connect();
+    const allUsers = await User.find({});
+    console.log(allUsers);
     // Auto-seed assignments only if collection is empty
     await seedIfEmpty();
     console.log(`✅ Database connected to MongoDB successfully`);

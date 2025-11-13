@@ -61,6 +61,14 @@ const generateToken = (userId, studentId) => {
 
 // Student registration
 router.post('/register', async (req, res) => {
+  const requestId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  
+  console.log('\n========================================');
+  console.log(`[${requestId}] STUDENT REGISTRATION REQUEST`);
+  console.log('========================================');
+  console.log(`[${requestId}] Timestamp: ${new Date().toISOString()}`);
+  console.log(`[${requestId}] IP Address: ${req.ip}`);
+  
   try {
     const {
       firstName,
@@ -75,31 +83,54 @@ router.post('/register', async (req, res) => {
       address
     } = req.body;
 
-    console.log(`Request Received: ${JSON.stringify(req.body)}`);
+    console.log(`[${requestId}] Registration Data Received:`);
+    console.log(`[${requestId}]   - Username: ${username}`);
+    console.log(`[${requestId}]   - Email: ${email}`);
+    console.log(`[${requestId}]   - Name: ${firstName} ${lastName}`);
+    console.log(`[${requestId}]   - Password length: ${password ? password.length : 0}`);
     
     // Check if student already exists by email
+    console.log(`[${requestId}] Step 1: Check if email already exists`);
     const existingStudent = await Student.findOne({ email });
     if (existingStudent) {
+      console.log(`[${requestId}] ❌ FAILED: Email already registered`);
+      console.log(`[${requestId}]   - Email: ${email}`);
+      console.log('========================================\n');
+      
       return res.status(400).json({
         success: false,
         message: 'Student with this email already exists'
       });
     }
+    console.log(`[${requestId}] ✓ Email available`);
 
     // Check if username already exists
+    console.log(`[${requestId}] Step 2: Check if username already exists`);
     const existingUser = await User.findOne({ username });
     if (existingUser) {
+      console.log(`[${requestId}] ❌ FAILED: Username already taken`);
+      console.log(`[${requestId}]   - Username: ${username}`);
+      console.log('========================================\n');
+      
       return res.status(400).json({
         success: false,
         message: 'Username already taken'
       });
     }
+    console.log(`[${requestId}] ✓ Username available`);
 
     // Generate unique student ID
+    console.log(`[${requestId}] Step 3: Generate student ID`);
     const { v4: uuidv4 } = require('uuid');
     const studentId = `STU-${uuidv4().substring(0, 8).toUpperCase()}`;
+    console.log(`[${requestId}]   - Generated Student ID: ${studentId}`);
 
     // First, create the User record for authentication
+    console.log(`[${requestId}] Step 4: Create User record`);
+    console.log(`[${requestId}]   - Username: ${username}`);
+    console.log(`[${requestId}]   - Role: student`);
+    console.log(`[${requestId}]   - Password will be hashed by pre-save hook...`);
+    
     const user = new User({
       username,
       password,
@@ -107,8 +138,11 @@ router.post('/register', async (req, res) => {
     });
 
     await user.save();
+    console.log(`[${requestId}] ✓ User record created`);
+    console.log(`[${requestId}]   - User ID: ${user._id}`);
 
     // Then, create the Student record with reference to User
+    console.log(`[${requestId}] Step 5: Create Student profile`);
     const student = new Student({
       user_id: user._id,
       studentId,
@@ -124,9 +158,19 @@ router.post('/register', async (req, res) => {
     });
 
     await student.save();
+    console.log(`[${requestId}] ✓ Student profile created`);
+    console.log(`[${requestId}]   - Student ID: ${student._id}`);
 
     // Generate token
+    console.log(`[${requestId}] Step 6: Generate JWT token`);
     const token = generateToken(user._id, student._id);
+    console.log(`[${requestId}]   - Token generated: ${token.substring(0, 30)}...`);
+
+    console.log(`[${requestId}] ✅ REGISTRATION SUCCESSFUL`);
+    console.log(`[${requestId}]   - Username: ${username}`);
+    console.log(`[${requestId}]   - Student: ${firstName} ${lastName}`);
+    console.log(`[${requestId}]   - Student Number: ${studentId}`);
+    console.log('========================================\n');
 
     res.status(201).json({
       success: true,
@@ -146,7 +190,12 @@ router.post('/register', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error registering student:', error);
+    console.log(`[${requestId}] ❌ EXCEPTION ERROR during registration`);
+    console.error(`[${requestId}] Error type: ${error.name}`);
+    console.error(`[${requestId}] Error message: ${error.message}`);
+    console.error(`[${requestId}] Stack trace:`, error.stack);
+    console.log('========================================\n');
+    
     res.status(500).json({
       success: false,
       message: 'Error registering student',
@@ -157,45 +206,152 @@ router.post('/register', async (req, res) => {
 
 // Student login
 router.post('/login', async (req, res) => {
+  const requestId = `REQ-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  
+  console.log('\n========================================');
+  console.log(`[${requestId}] STUDENT LOGIN REQUEST STARTED`);
+  console.log('========================================');
+  console.log(`[${requestId}] Timestamp: ${new Date().toISOString()}`);
+  console.log(`[${requestId}] IP Address: ${req.ip}`);
+  console.log(`[${requestId}] User-Agent: ${req.get('User-Agent')}`);
+  
   try {
     const { username, password } = req.body;
+    
+    console.log(`[${requestId}] Step 1: Extract credentials from request body`);
+    console.log(`[${requestId}]   - Username received: ${username ? `"${username}"` : 'MISSING'}`);
+    console.log(`[${requestId}]   - Username length: ${username ? username.length : 0}`);
+    console.log(`[${requestId}]   - Password received: ${password ? 'YES' : 'NO'}`);
+    console.log(`[${requestId}]   - Password length: ${password ? password.length : 0}`);
 
     if (!username || !password) {
+      console.log(`[${requestId}] ❌ FAILED: Missing credentials`);
+      console.log(`[${requestId}]   - Username: ${username ? 'provided' : 'MISSING'}`);
+      console.log(`[${requestId}]   - Password: ${password ? 'provided' : 'MISSING'}`);
+      console.log('========================================\n');
+      
       return res.status(400).json({
         success: false,
         message: 'Username and password are required'
       });
     }
 
-    // Find user by username
-    const user = await User.findOne({ username });
-    if (!user || user.role !== 'student') {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid username or password'
-      });
-    }
+    // Normalize username AND password to avoid failures due to accidental whitespace
+    console.log(`[${requestId}] Step 2: Normalize credentials (trim whitespace)`);
+    const normalizedUsername = (typeof username === 'string') ? username.trim() : username;
+    const normalizedPassword = (typeof password === 'string') ? password.trim() : password;
+    
+    console.log(`[${requestId}]   - Original username: "${username}"`);
+    console.log(`[${requestId}]   - Normalized username: "${normalizedUsername}"`);
+    console.log(`[${requestId}]   - Whitespace trimmed from username: ${username.length - normalizedUsername.length} chars`);
+    console.log(`[${requestId}]   - Whitespace trimmed from password: ${password.length - normalizedPassword.length} chars`);
 
-    // Check password
-    const isPasswordValid = await user.comparePassword(password);
-    if (!isPasswordValid) {
+    // Find user by username
+    console.log(`[${requestId}] Step 3: Search for user in database`);
+    console.log(`[${requestId}]   - Searching for username: "${normalizedUsername}"`);
+    
+    const user = await User.findOne({ username: normalizedUsername });
+    
+    if (!user) {
+      console.log(`[${requestId}] ❌ FAILED: User not found in database`);
+      console.log(`[${requestId}]   - Searched username: "${normalizedUsername}"`);
+      console.log('========================================\n');
+      
       return res.status(401).json({
         success: false,
         message: 'Invalid username or password'
       });
     }
+    
+    console.log(`[${requestId}] ✓ User found in database`);
+    console.log(`[${requestId}]   - User ID: ${user._id}`);
+    console.log(`[${requestId}]   - Username: ${user.username}`);
+    console.log(`[${requestId}]   - Role: ${user.role}`);
+    console.log(`[${requestId}]   - Created: ${user.createdAt}`);
+    console.log(`[${requestId}]   - Last Login: ${user.lastLogin || 'Never'}`);
+    
+    if (user.role !== 'student') {
+      console.log(`[${requestId}] ❌ FAILED: User role mismatch`);
+      console.log(`[${requestId}]   - Expected role: student`);
+      console.log(`[${requestId}]   - Actual role: ${user.role}`);
+      console.log('========================================\n');
+      
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid username or password'
+      });
+    }
+    
+    console.log(`[${requestId}] ✓ User role verified: ${user.role}`);
+
+    // Check password (using normalized/trimmed password)
+    console.log(`[${requestId}] Step 4: Verify password`);
+    console.log(`[${requestId}]   - Password hash: ${user.password.substring(0, 30)}...`);
+    console.log(`[${requestId}]   - Comparing password...`);
+    
+    const passwordCheckStart = Date.now();
+    const isPasswordValid = await user.comparePassword(normalizedPassword);
+    const passwordCheckDuration = Date.now() - passwordCheckStart;
+    
+    console.log(`[${requestId}]   - Password comparison took: ${passwordCheckDuration}ms`);
+    console.log(`[${requestId}]   - Password match: ${isPasswordValid ? 'YES ✓' : 'NO ✗'}`);
+    
+    if (!isPasswordValid) {
+      console.log(`[${requestId}] ❌ FAILED: Invalid password`);
+      console.log(`[${requestId}]   - Username: ${normalizedUsername}`);
+      console.log(`[${requestId}]   - Password length provided: ${normalizedPassword.length}`);
+      console.log('========================================\n');
+      
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid username or password'
+      });
+    }
+    
+    console.log(`[${requestId}] ✓ Password verified successfully`);
+
+    console.log(`[${requestId}] ✓ Password verified successfully`);
 
     // Find associated student record
+    console.log(`[${requestId}] Step 5: Fetch student profile`);
+    console.log(`[${requestId}]   - Looking for student with user_id: ${user._id}`);
+    
     const student = await Student.findOne({ user_id: user._id }).populate('enrolledCourses.courseId');
+    
     if (!student) {
+      console.log(`[${requestId}] ❌ FAILED: Student profile not found`);
+      console.log(`[${requestId}]   - User ID: ${user._id}`);
+      console.log(`[${requestId}]   - Username: ${user.username}`);
+      console.log('========================================\n');
+      
       return res.status(404).json({
         success: false,
         message: 'Student profile not found'
       });
     }
+    
+    console.log(`[${requestId}] ✓ Student profile found`);
+    console.log(`[${requestId}]   - Student ID: ${student._id}`);
+    console.log(`[${requestId}]   - Student Number: ${student.studentId}`);
+    console.log(`[${requestId}]   - Name: ${student.firstName} ${student.lastName}`);
+    console.log(`[${requestId}]   - Email: ${student.email}`);
+    console.log(`[${requestId}]   - Enrolled Courses: ${student.enrolledCourses ? student.enrolledCourses.length : 0}`);
 
     // Generate token
+    console.log(`[${requestId}] Step 6: Generate JWT token`);
+    const tokenStart = Date.now();
     const token = generateToken(user._id, student._id);
+    const tokenDuration = Date.now() - tokenStart;
+    
+    console.log(`[${requestId}]   - Token generation took: ${tokenDuration}ms`);
+    console.log(`[${requestId}]   - Token preview: ${token.substring(0, 30)}...`);
+    console.log(`[${requestId}]   - Token length: ${token.length} chars`);
+
+    console.log(`[${requestId}] ✅ LOGIN SUCCESSFUL`);
+    console.log(`[${requestId}]   - User: ${user.username}`);
+    console.log(`[${requestId}]   - Student: ${student.firstName} ${student.lastName}`);
+    console.log(`[${requestId}]   - Total time: ${Date.now() - parseInt(requestId.split('-')[1])}ms`);
+    console.log('========================================\n');
 
     res.json({
       success: true,
@@ -216,7 +372,12 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error during student login:', error);
+    console.log(`[${requestId}] ❌ EXCEPTION ERROR`);
+    console.error(`[${requestId}] Error type: ${error.name}`);
+    console.error(`[${requestId}] Error message: ${error.message}`);
+    console.error(`[${requestId}] Stack trace:`, error.stack);
+    console.log('========================================\n');
+    
     res.status(500).json({
       success: false,
       message: 'Error during login',

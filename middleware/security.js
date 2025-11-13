@@ -44,6 +44,7 @@ const validateAdminLogin = [
     .withMessage('Password must be between 1 and 50 characters')
     .matches(/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/)
     .withMessage('Password contains invalid characters')
+    .trim(),
 ];
 
 // Input validation for general text fields
