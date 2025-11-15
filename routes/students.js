@@ -218,41 +218,41 @@ router.post('/login', async (req, res) => {
   console.log(`[${requestId}] User-Agent: ${req.get('User-Agent')}`);
   
   try {
-    const { username, password } = req.body;
+    const { username, password, email, usernameOrEmail } = req.body;
     
     console.log(`[${requestId}] Step 1: Extract credentials from request body`);
-    console.log(`[${requestId}]   - Username received: ${username ? `"${username}"` : 'MISSING'}`);
-    console.log(`[${requestId}]   - Username length: ${username ? username.length : 0}`);
+    const loginIdentifierRaw = (typeof usernameOrEmail === 'string') ? usernameOrEmail : (typeof username === 'string') ? username : (typeof email === 'string') ? email : '';
+    console.log(`[${requestId}]   - Identifier received: ${loginIdentifierRaw ? `"${loginIdentifierRaw}"` : 'MISSING'}`);
     console.log(`[${requestId}]   - Password received: ${password ? 'YES' : 'NO'}`);
-    console.log(`[${requestId}]   - Password length: ${password ? password.length : 0}`);
 
-    if (!username || !password) {
+    if (!loginIdentifierRaw || !password) {
       console.log(`[${requestId}] ❌ FAILED: Missing credentials`);
-      console.log(`[${requestId}]   - Username: ${username ? 'provided' : 'MISSING'}`);
+      console.log(`[${requestId}]   - Identifier: ${loginIdentifierRaw ? 'provided' : 'MISSING'}`);
       console.log(`[${requestId}]   - Password: ${password ? 'provided' : 'MISSING'}`);
       console.log('========================================\n');
       
       return res.status(400).json({
         success: false,
-        message: 'Username and password are required'
+        message: 'Username or email and password are required'
       });
     }
 
-    // Normalize username AND password to avoid failures due to accidental whitespace
+    // Normalize identifier AND password to avoid failures due to accidental whitespace
     console.log(`[${requestId}] Step 2: Normalize credentials (trim whitespace)`);
-    const normalizedUsername = (typeof username === 'string') ? username.trim() : username;
+    const identifier = loginIdentifierRaw.trim();
     const normalizedPassword = (typeof password === 'string') ? password.trim() : password;
+    const isEmailLogin = identifier.includes('@');
     
-    console.log(`[${requestId}]   - Original username: "${username}"`);
-    console.log(`[${requestId}]   - Normalized username: "${normalizedUsername}"`);
-    console.log(`[${requestId}]   - Whitespace trimmed from username: ${username.length - normalizedUsername.length} chars`);
+    console.log(`[${requestId}]   - Original identifier: "${loginIdentifierRaw}"`);
+    console.log(`[${requestId}]   - Normalized identifier: "${identifier}" (email=${isEmailLogin})`);
     console.log(`[${requestId}]   - Whitespace trimmed from password: ${password.length - normalizedPassword.length} chars`);
 
-    // Find user by username
+    // Find user by username or email
     console.log(`[${requestId}] Step 3: Search for user in database`);
-    console.log(`[${requestId}]   - Searching for username: "${normalizedUsername}"`);
+    const query = isEmailLogin ? { email: identifier.toLowerCase() } : { username: identifier };
+    console.log(`[${requestId}]   - Query: ${JSON.stringify(query)}`);
     
-    const user = await User.findOne({ username: normalizedUsername });
+    const user = await User.findOne(query);
     
     if (!user) {
       console.log(`[${requestId}] ❌ FAILED: User not found in database`);
@@ -261,7 +261,7 @@ router.post('/login', async (req, res) => {
       
       return res.status(401).json({
         success: false,
-        message: 'Invalid username or password'
+        message: 'Invalid username/email or password'
       });
     }
     
