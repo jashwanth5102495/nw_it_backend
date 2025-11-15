@@ -33,53 +33,82 @@ const studentSchema = new mongoose.Schema({
     lowercase: true,
     maxlength: 100
   },
+  // Make phone optional to support Google-first login setup flow
   phone: {
     type: String,
-    required: true,
+    required: false,
     trim: true,
-    maxlength: 20
+    maxlength: 20,
+    default: ''
   },
+  // Education optional initially; can be completed in setup
   education: {
     type: String,
-    required: true,
-    enum: ['high-school', 'diploma', 'bachelors', 'masters', 'phd', 'other']
+    required: false,
+    enum: ['high-school', 'diploma', 'bachelors', 'masters', 'phd', 'other'],
+    default: 'other'
   },
   experience: {
     type: String,
     enum: ['beginner', 'intermediate', 'advanced'],
     default: 'beginner'
   },
+  // Date of birth optional for initial Google login
   dateOfBirth: {
     type: Date,
-    required: true
+    required: false,
+    default: null
   },
+  // Address fields optional initially; completed during setup
   address: {
     street: {
       type: String,
-      required: true,
-      trim: true
+      required: false,
+      trim: true,
+      default: ''
     },
     city: {
       type: String,
-      required: true,
-      trim: true
+      required: false,
+      trim: true,
+      default: ''
     },
     state: {
       type: String,
-      required: true,
-      trim: true
+      required: false,
+      trim: true,
+      default: ''
     },
     zipCode: {
       type: String,
-      required: true,
-      trim: true
+      required: false,
+      trim: true,
+      default: ''
     },
     country: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
       default: 'United States'
     }
+  },
+  // Auth provider metadata for admin visibility and logic
+  authProvider: {
+    type: String,
+    enum: ['local', 'google'],
+    default: 'local'
+  },
+  googleId: {
+    type: String,
+    default: null
+  },
+  setupRequired: {
+    type: Boolean,
+    default: false
+  },
+  setupCompletedAt: {
+    type: Date,
+    default: null
   },
   enrolledCourses: [{
     courseId: {
@@ -229,68 +258,34 @@ studentSchema.methods.updateCourseProgress = function(courseId, progress, comple
   
   if (enrollment) {
     enrollment.progress = progress;
-    enrollment.completedModules = completedModules;
-    
-    if (progress >= 100) {
-      enrollment.status = 'completed';
+    if (Array.isArray(completedModules)) {
+      enrollment.completedModules = completedModules;
     }
   }
-  
-  return this.save();
 };
 
-// Method to submit module with URL
 studentSchema.methods.submitModule = function(courseId, moduleIndex, moduleId, submissionUrl, submissionType) {
   const enrollment = this.enrolledCourses.find(
     enrollment => enrollment.courseId.toString() === courseId.toString()
   );
   
-  if (!enrollment) {
-    throw new Error('Student is not enrolled in this course');
-  }
+  if (!enrollment) return;
 
-  // Check if module is already submitted
-  const existingSubmission = enrollment.completedModules.find(
-    module => module.moduleIndex === moduleIndex
-  );
-
-  if (existingSubmission) {
-    // Update existing submission
-    existingSubmission.submissionUrl = submissionUrl;
-    existingSubmission.submissionType = submissionType;
-    existingSubmission.submittedAt = new Date();
-    existingSubmission.status = 'submitted';
-  } else {
-    // Add new submission
-    enrollment.completedModules.push({
-      moduleId: moduleId,
-      moduleIndex: moduleIndex,
-      submissionUrl: submissionUrl,
-      submissionType: submissionType,
-      submittedAt: new Date(),
-      status: 'submitted'
-    });
-  }
-
-  // Update progress based on completed modules
-  const totalModules = 6; // This should be dynamic based on course
-  const progress = Math.round((enrollment.completedModules.length / totalModules) * 100);
-  enrollment.progress = Math.min(progress, 100);
-
-  if (enrollment.progress >= 100) {
-    enrollment.status = 'completed';
-  }
-  
-  return this.save();
+  enrollment.completedModules = enrollment.completedModules || [];
+  enrollment.completedModules.push({
+    moduleId,
+    submissionUrl,
+    submittedAt: new Date(),
+    status: 'submitted',
+    feedback: ''
+  });
 };
 
-// Method to get module submissions for a course
 studentSchema.methods.getModuleSubmissions = function(courseId) {
   const enrollment = this.enrolledCourses.find(
     enrollment => enrollment.courseId.toString() === courseId.toString()
   );
-  
-  return enrollment ? enrollment.completedModules : [];
+  return enrollment ? enrollment.completedModules || [] : [];
 };
 
 const Student = mongoose.model('Student', studentSchema);

@@ -7,6 +7,8 @@ const User = require('../models/User'); // Add User model
 const StudentProgress = require('../models/StudentProgress');
 const { authenticateStudent, authorizeOwnProfile } = require('../middleware/auth');
 const router = express.Router();
+const { OAuth2Client } = require('google-auth-library');
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID);
 
 // Utility: resolve course by human-friendly courseId or Mongo ObjectId
 function escapeRegex(str) {
@@ -210,7 +212,9 @@ router.post('/login', async (req, res) => {
           email: student.email,
           username: user.username,
           enrolledCourses: student.enrolledCourses,
-          lastLogin: new Date()
+          lastLogin: new Date(),
+          authProvider: student.authProvider || 'local',
+          setupRequired: Boolean(student.setupRequired)
         },
         token
       }
@@ -224,6 +228,123 @@ router.post('/login', async (req, res) => {
     });
   }
 });
+
+// Google login - verify Google ID token then create or fetch Student/User
+router.post('/google-login', async (req, res) => {
+  try {
+    const { credential, idToken } = req.body;
+    const tokenToVerify = credential || idToken;
+
+    if (!tokenToVerify) {
+      return res.status(400).json({ success: false, message: 'Missing Google ID token' });
+    }
+    if (!googleClient._clientId) {
+      console.warn('Google client ID not configured');
+    }
+
+    // Verify the token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: tokenToVerify,
+      audience: process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID
+    });
+    const payload = ticket.getPayload();
+    if (!payload) {
+      return res.status(401).json({ success: false, message: 'Invalid Google token' });
+    }
+
+    const googleId = payload.sub;
+    const email = (payload.email || '').toLowerCase();
+    const firstName = payload.given_name || 'Student';
+    const lastName = payload.family_name || 'User';
+
+    // Try to find existing student by email
+    let student = await Student.findOne({ email });
+    let user;
+
+    // Ensure a user record exists
+    const baseUsername = email ? email.split('@')[0] : `google_${googleId}`;
+    const makeUniqueUsername = async (base) => {
+      let candidate = base;
+      let i = 1;
+      while (await User.findOne({ username: candidate })) {
+        candidate = `${base}_${i++}`;
+      }
+      return candidate;
+    };
+
+    if (student) {
+      // Link/update Google metadata
+      student.authProvider = 'google';
+      student.googleId = googleId;
+      student.lastLogin = new Date();
+      await student.save();
+
+      user = await User.findById(student.user_id);
+      if (!user) {
+        const username = await makeUniqueUsername(baseUsername);
+        user = new User({ username, password: Math.random().toString(36).slice(2), role: 'student' });
+        await user.save();
+        student.user_id = user._id;
+        await student.save();
+      }
+    } else {
+      // Create a fresh User and minimal Student; complete later via setup
+      const username = await makeUniqueUsername(baseUsername);
+      user = new User({ username, password: Math.random().toString(36).slice(2), role: 'student' });
+      await user.save();
+
+      const { v4: uuidv4 } = require('uuid');
+      const studentId = `STU-${uuidv4().substring(0, 8).toUpperCase()}`;
+
+      student = new Student({
+        user_id: user._id,
+        studentId,
+        firstName,
+        lastName,
+        email,
+        phone: '',
+        dateOfBirth: null,
+        address: { street: '', city: '', state: '', zipCode: '', country: 'United States' },
+        education: 'other',
+        experience: 'beginner',
+        authProvider: 'google',
+        googleId,
+        setupRequired: true,
+        lastLogin: new Date()
+      });
+      await student.save();
+    }
+
+    // Generate our JWT
+    const appToken = generateToken(user._id, student._id);
+
+    res.json({
+      success: true,
+      message: 'Google login successful',
+      data: {
+        student: {
+          id: student._id,
+          user_id: user._id,
+          studentId: student.studentId,
+          firstName: student.firstName,
+          lastName: student.lastName,
+          email: student.email,
+          username: user.username,
+          enrolledCourses: student.enrolledCourses,
+          lastLogin: student.lastLogin,
+          authProvider: student.authProvider,
+          setupRequired: Boolean(student.setupRequired)
+        },
+        token: appToken,
+        needsSetup: Boolean(student.setupRequired)
+      }
+    });
+  } catch (error) {
+    console.error('Google login error:', error);
+    res.status(500).json({ success: false, message: 'Error during Google login', error: error.message });
+  }
+});
+
 
 // Get student profile (requires authentication)
 router.get('/profile/:id', authenticateStudent, authorizeOwnProfile, async (req, res) => {
@@ -271,7 +392,7 @@ router.get('/profile/:id', authenticateStudent, authorizeOwnProfile, async (req,
 // Update student profile
 router.put('/profile/:id', authenticateStudent, authorizeOwnProfile, async (req, res) => {
   try {
-    const allowedUpdates = ['firstName', 'lastName', 'phone', 'address'];
+    const allowedUpdates = ['firstName', 'lastName', 'phone', 'address', 'education', 'experience', 'dateOfBirth'];
     const updates = {};
 
     Object.keys(req.body).forEach(key => {
@@ -279,6 +400,18 @@ router.put('/profile/:id', authenticateStudent, authorizeOwnProfile, async (req,
         updates[key] = req.body[key];
       }
     });
+
+    // Normalize dateOfBirth if provided
+    if (updates.dateOfBirth) {
+      updates.dateOfBirth = new Date(updates.dateOfBirth);
+    }
+
+    // If core profile fields are present, mark setup as complete
+    const hasCore = updates.phone && updates.address && updates.education && updates.dateOfBirth;
+    if (hasCore) {
+      updates.setupRequired = false;
+      updates.setupCompletedAt = new Date();
+    }
 
     const student = await Student.findByIdAndUpdate(
       req.params.id,
@@ -303,7 +436,12 @@ router.put('/profile/:id', authenticateStudent, authorizeOwnProfile, async (req,
         lastName: student.lastName,
         email: student.email,
         phone: student.phone,
-        address: student.address
+        address: student.address,
+        education: student.education,
+        experience: student.experience,
+        dateOfBirth: student.dateOfBirth,
+        setupRequired: Boolean(student.setupRequired),
+        setupCompletedAt: student.setupCompletedAt || null
       }
     });
   } catch (error) {
@@ -759,7 +897,7 @@ router.get('/:id/progress', authenticateStudent, authorizeOwnProfile, async (req
     
     const progressRecords = await StudentProgress.getProgressByStudent(studentId);
     
-    if (!progressRecords || progressRecords.length === 0) {
+    if (!progressRecords.length) {
       return res.json({
         success: true,
         message: 'No progress records found',
