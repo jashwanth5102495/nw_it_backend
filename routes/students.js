@@ -280,7 +280,7 @@ router.post('/login', async (req, res) => {
       
       return res.status(401).json({
         success: false,
-        message: 'Invalid username or password'
+        message: 'Invalid username/email or password'
       });
     }
     
@@ -306,7 +306,7 @@ router.post('/login', async (req, res) => {
       
       return res.status(401).json({
         success: false,
-        message: 'Invalid username or password'
+        message: 'Invalid username/email or password'
       });
     }
     
