@@ -239,17 +239,19 @@ router.post('/login', async (req, res) => {
 
     // Normalize identifier AND password to avoid failures due to accidental whitespace
     console.log(`[${requestId}] Step 2: Normalize credentials (trim whitespace)`);
-    const identifier = loginIdentifierRaw.trim();
+    const normalizedUsername = loginIdentifierRaw.trim();
     const normalizedPassword = (typeof password === 'string') ? password.trim() : password;
-    const isEmailLogin = identifier.includes('@');
+    // Use proper email regex to detect email vs username (usernames can contain @ or .)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isEmailLogin = emailRegex.test(normalizedUsername);
     
     console.log(`[${requestId}]   - Original identifier: "${loginIdentifierRaw}"`);
-    console.log(`[${requestId}]   - Normalized identifier: "${identifier}" (email=${isEmailLogin})`);
+    console.log(`[${requestId}]   - Normalized identifier: "${normalizedUsername}" (email=${isEmailLogin})`);
     console.log(`[${requestId}]   - Whitespace trimmed from password: ${password.length - normalizedPassword.length} chars`);
 
     // Find user by username or email
     console.log(`[${requestId}] Step 3: Search for user in database`);
-    const query = isEmailLogin ? { email: identifier.toLowerCase() } : { username: identifier };
+    const query = isEmailLogin ? { email: normalizedUsername.toLowerCase() } : { username: normalizedUsername };
     console.log(`[${requestId}]   - Query: ${JSON.stringify(query)}`);
     
     const user = await User.findOne(query);
