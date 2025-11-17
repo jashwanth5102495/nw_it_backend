@@ -341,6 +341,10 @@ router.post('/login', async (req, res) => {
     console.log(`[${requestId}]   - Email: ${student.email}`);
     console.log(`[${requestId}]   - Enrolled Courses: ${student.enrolledCourses ? student.enrolledCourses.length : 0}`);
 
+    // Update last login timestamp
+    student.lastLogin = new Date();
+    await student.save();
+
     // Generate token
     console.log(`[${requestId}] Step 6: Generate JWT token`);
     const tokenStart = Date.now();
@@ -362,17 +366,27 @@ router.post('/login', async (req, res) => {
       message: 'Login successful',
       data: {
         student: {
+          _id: student._id,
           id: student._id,
           user_id: user._id,
           studentId: student.studentId,
           firstName: student.firstName,
           lastName: student.lastName,
           email: student.email,
+          phone: student.phone || '',
+          dateOfBirth: student.dateOfBirth || null,
+          education: student.education || '',
+          experience: student.experience || 'beginner',
+          address: student.address || { street: '', city: '', state: '', zipCode: '', country: '' },
           username: user.username,
-          enrolledCourses: student.enrolledCourses,
-          lastLogin: new Date(),
+          enrolledCourses: student.enrolledCourses || [],
+          paymentHistory: student.paymentHistory || [],
+          lastLogin: student.lastLogin,
           authProvider: student.authProvider || 'local',
-          setupRequired: Boolean(student.setupRequired)
+          googleId: student.googleId || null,
+          setupRequired: Boolean(student.setupRequired),
+          setupCompletedAt: student.setupCompletedAt || null,
+          createdAt: student.createdAt
         },
         token
       }
