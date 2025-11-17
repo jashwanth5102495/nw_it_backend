@@ -179,14 +179,24 @@ router.post('/register', async (req, res) => {
       message: 'Student registered successfully',
       data: {
         student: {
+          _id: student._id,
           id: student._id,
           user_id: user._id,
           studentId: student.studentId,
           firstName: student.firstName,
           lastName: student.lastName,
           email: student.email,
+          phone: student.phone || '',
+          dateOfBirth: student.dateOfBirth || null,
+          education: student.education || '',
+          experience: student.experience || 'beginner',
+          address: student.address || { street: '', city: '', state: '', zipCode: '', country: '' },
           username: user.username,
-          enrolledCourses: student.enrolledCourses
+          enrolledCourses: student.enrolledCourses || [],
+          paymentHistory: student.paymentHistory || [],
+          authProvider: 'local',
+          setupRequired: false,
+          createdAt: student.createdAt
         },
         token
       }
@@ -532,17 +542,27 @@ router.post('/google-login', async (req, res) => {
       message: 'Google login successful',
       data: {
         student: {
+          _id: student._id,
           id: student._id,
           user_id: user._id,
           studentId: student.studentId,
           firstName: student.firstName,
           lastName: student.lastName,
           email: student.email,
+          phone: student.phone || '',
+          dateOfBirth: student.dateOfBirth || null,
+          education: student.education || '',
+          experience: student.experience || 'beginner',
+          address: student.address || { street: '', city: '', state: '', zipCode: '', country: '' },
           username: user.username,
-          enrolledCourses: student.enrolledCourses,
+          enrolledCourses: student.enrolledCourses || [],
+          paymentHistory: student.paymentHistory || [],
           lastLogin: student.lastLogin,
           authProvider: student.authProvider,
-          setupRequired: Boolean(student.setupRequired)
+          googleId: student.googleId || null,
+          setupRequired: Boolean(student.setupRequired),
+          setupCompletedAt: student.setupCompletedAt || null,
+          createdAt: student.createdAt
         },
         token: appToken,
         needsSetup: Boolean(student.setupRequired)
