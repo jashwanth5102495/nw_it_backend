@@ -36,19 +36,37 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
   'http://localhost:5174',
-];
+].filter(Boolean); // Remove undefined/null values
+
+console.log('🔒 CORS Configuration:');
+console.log('  NODE_ENV:', process.env.NODE_ENV);
+console.log('  Allowed Origins:', allowedOrigins);
 
 const corsOptions = {
   origin: (origin, callback) => {
     const isDev = process.env.NODE_ENV !== 'production';
-    // Allow non-browser/CLI requests (no origin) and dev
-    if (!origin || isDev) return callback(null, true);
-    const whitelist = allowedOrigins.filter(Boolean);
-    const isWhitelisted = whitelist.includes(origin)
+    
+    // Allow non-browser/CLI requests (no origin)
+    if (!origin) return callback(null, true);
+    
+    // In development, allow all origins
+    if (isDev) {
+      console.log('  ✓ Dev mode: Allowing origin:', origin);
+      return callback(null, true);
+    }
+    
+    // In production, check whitelist
+    const isWhitelisted = allowedOrigins.includes(origin)
       || /\.vercel\.app$/.test(origin)
       || /\.railway\.app$/.test(origin)
       || /\.github\.io$/.test(origin);
-    if (isWhitelisted) return callback(null, true);
+    
+    if (isWhitelisted) {
+      console.log('  ✓ Allowed origin:', origin);
+      return callback(null, true);
+    }
+    
+    console.error('  ✗ Blocked origin:', origin);
     return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
   credentials: true,
@@ -63,12 +81,6 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(securityHeaders);
 app.use(preventSQLInjection);
 app.use(preventXSS);
-
-console.log(process.env.VITE_PRODUCTION_URL);
-console.log(process.env.MONGODB_URI);
-// CORS is configured above; duplicate block removed.
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Routes with rate limiting for sensitive endpoints
 app.use('/api/projects', projectRoutes);
