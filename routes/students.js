@@ -445,15 +445,35 @@ router.post('/google-login', async (req, res) => {
       user = await User.findById(student.user_id);
       if (!user) {
         const username = await makeUniqueUsername(baseUsername);
-        user = new User({ username, password: Math.random().toString(36).slice(2), role: 'student' });
+        user = new User({ 
+          username, 
+          email: email,
+          password: Math.random().toString(36).slice(2), 
+          role: 'student',
+          authProvider: 'google',
+          googleId: googleId
+        });
         await user.save();
         student.user_id = user._id;
         await student.save();
+      } else {
+        // Update user with email and Google info if not already set
+        if (!user.email) user.email = email;
+        if (!user.authProvider || user.authProvider === 'local') user.authProvider = 'google';
+        if (!user.googleId) user.googleId = googleId;
+        await user.save();
       }
     } else {
       // Create a fresh User and minimal Student; complete later via setup
       const username = await makeUniqueUsername(baseUsername);
-      user = new User({ username, password: Math.random().toString(36).slice(2), role: 'student' });
+      user = new User({ 
+        username, 
+        email: email,
+        password: Math.random().toString(36).slice(2), 
+        role: 'student',
+        authProvider: 'google',
+        googleId: googleId
+      });
       await user.save();
 
       const { v4: uuidv4 } = require('uuid');
@@ -558,6 +578,18 @@ router.put('/profile/:id', authenticateStudent, authorizeOwnProfile, async (req,
     const allowedUpdates = ['firstName', 'lastName', 'phone', 'address', 'education', 'experience', 'dateOfBirth'];
     const updates = {};
 
+    // Get the student to check authProvider
+    const student = await Student.findById(req.params.id);
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found'
+      });
+    }
+
+    // For LOCAL auth users, allow username, email, and password updates
+    const isLocalAuth = student.authProvider === 'local' || !student.authProvider;
+    
     Object.keys(req.body).forEach(key => {
       if (allowedUpdates.includes(key)) {
         updates[key] = req.body[key];
@@ -576,35 +608,81 @@ router.put('/profile/:id', authenticateStudent, authorizeOwnProfile, async (req,
       updates.setupCompletedAt = new Date();
     }
 
-    const student = await Student.findByIdAndUpdate(
+    // Handle email update for local auth users
+    if (isLocalAuth && req.body.email) {
+      // Check if email is already taken by another student
+      const existingStudent = await Student.findOne({ email: req.body.email, _id: { $ne: student._id } });
+      if (existingStudent) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email already in use by another account'
+        });
+      }
+      updates.email = req.body.email;
+    }
+
+    // Update Student record
+    const updatedStudent = await Student.findByIdAndUpdate(
       req.params.id,
       updates,
       { new: true, runValidators: true }
     );
 
-    if (!student) {
-      return res.status(404).json({
-        success: false,
-        message: 'Student not found'
-      });
+    // Handle User record updates for local auth
+    if (isLocalAuth && student.user_id) {
+      const userUpdates = {};
+      
+      // Update username if provided
+      if (req.body.username) {
+        const existingUser = await User.findOne({ username: req.body.username, _id: { $ne: student.user_id } });
+        if (existingUser) {
+          return res.status(400).json({
+            success: false,
+            message: 'Username already taken'
+          });
+        }
+        userUpdates.username = req.body.username;
+      }
+
+      // Update email in User record
+      if (req.body.email) {
+        userUpdates.email = req.body.email;
+      }
+
+      // Update password if provided
+      if (req.body.password) {
+        if (req.body.password.length < 6) {
+          return res.status(400).json({
+            success: false,
+            message: 'Password must be at least 6 characters'
+          });
+        }
+        userUpdates.password = req.body.password;
+      }
+
+      // Apply User updates if any
+      if (Object.keys(userUpdates).length > 0) {
+        await User.findByIdAndUpdate(student.user_id, userUpdates);
+      }
     }
 
     res.json({
       success: true,
       message: 'Profile updated successfully',
       data: {
-        id: student._id,
-        studentId: student.studentId,
-        firstName: student.firstName,
-        lastName: student.lastName,
-        email: student.email,
-        phone: student.phone,
-        address: student.address,
-        education: student.education,
-        experience: student.experience,
-        dateOfBirth: student.dateOfBirth,
-        setupRequired: Boolean(student.setupRequired),
-        setupCompletedAt: student.setupCompletedAt || null
+        id: updatedStudent._id,
+        studentId: updatedStudent.studentId,
+        firstName: updatedStudent.firstName,
+        lastName: updatedStudent.lastName,
+        email: updatedStudent.email,
+        phone: updatedStudent.phone,
+        address: updatedStudent.address,
+        education: updatedStudent.education,
+        experience: updatedStudent.experience,
+        dateOfBirth: updatedStudent.dateOfBirth,
+        setupRequired: Boolean(updatedStudent.setupRequired),
+        setupCompletedAt: updatedStudent.setupCompletedAt || null,
+        authProvider: updatedStudent.authProvider || 'local'
       }
     });
   } catch (error) {

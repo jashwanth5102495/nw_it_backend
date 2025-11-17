@@ -10,15 +10,34 @@ const userSchema = new mongoose.Schema({
     minlength: 3,
     maxlength: 50
   },
+  email: {
+    type: String,
+    required: false, // Optional for backward compatibility
+    trim: true,
+    lowercase: true,
+    sparse: true, // Allows multiple null values
+    unique: true,
+    maxlength: 100
+  },
   password: {
     type: String,
-    required: true,
+    required: false, // Now optional to support Google OAuth without password
     minlength: 6
   },
   role: {
     type: String,
     enum: ['admin', 'student', 'instructor'],
     default: 'student'
+  },
+  authProvider: {
+    type: String,
+    enum: ['local', 'google'],
+    default: 'local'
+  },
+  googleId: {
+    type: String,
+    default: null,
+    sparse: true // Allows multiple null values
   },
   lastLogin: {
     type: Date,
@@ -58,9 +77,9 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
 
 // Method to hash password before saving
 userSchema.pre('save', async function(next) {
-  // Only hash the password if it has been modified (or is new)
-  if (!this.isModified('password')) {
-    console.log(`  [AUTH] Password not modified for user: ${this.username || 'NEW USER'}, skipping hash`);
+  // Only hash the password if it has been modified (or is new) AND password exists
+  if (!this.isModified('password') || !this.password) {
+    console.log(`  [AUTH] Password not modified or empty for user: ${this.username || 'NEW USER'}, skipping hash`);
     return next();
   }
   
