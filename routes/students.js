@@ -395,30 +395,42 @@ router.post('/login', async (req, res) => {
 // Google login - verify Google ID token then create or fetch Student/User
 router.post('/google-login', async (req, res) => {
   try {
-    const { credential, idToken } = req.body;
-    const tokenToVerify = credential || idToken;
+    const { credential, idToken, accessToken, userInfo } = req.body;
+    
+    let googleId, email, firstName, lastName;
+    
+    // Handle new flow with accessToken and userInfo
+    if (accessToken && userInfo) {
+      googleId = userInfo.sub;
+      email = (userInfo.email || '').toLowerCase();
+      firstName = userInfo.given_name || 'Student';
+      lastName = userInfo.family_name || 'User';
+    } else {
+      // Handle old flow with idToken
+      const tokenToVerify = credential || idToken;
 
-    if (!tokenToVerify) {
-      return res.status(400).json({ success: false, message: 'Missing Google ID token' });
-    }
-    if (!googleClient._clientId) {
-      console.warn('Google client ID not configured');
-    }
+      if (!tokenToVerify) {
+        return res.status(400).json({ success: false, message: 'Missing Google credentials' });
+      }
+      if (!googleClient._clientId) {
+        console.warn('Google client ID not configured');
+      }
 
-    // Verify the token
-    const ticket = await googleClient.verifyIdToken({
-      idToken: tokenToVerify,
-      audience: process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID
-    });
-    const payload = ticket.getPayload();
-    if (!payload) {
-      return res.status(401).json({ success: false, message: 'Invalid Google token' });
-    }
+      // Verify the token
+      const ticket = await googleClient.verifyIdToken({
+        idToken: tokenToVerify,
+        audience: process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID
+      });
+      const payload = ticket.getPayload();
+      if (!payload) {
+        return res.status(401).json({ success: false, message: 'Invalid Google token' });
+      }
 
-    const googleId = payload.sub;
-    const email = (payload.email || '').toLowerCase();
-    const firstName = payload.given_name || 'Student';
-    const lastName = payload.family_name || 'User';
+      googleId = payload.sub;
+      email = (payload.email || '').toLowerCase();
+      firstName = payload.given_name || 'Student';
+      lastName = payload.family_name || 'User';
+    }
 
     // Try to find existing student by email
     let student = await Student.findOne({ email });
