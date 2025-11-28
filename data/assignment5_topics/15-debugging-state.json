@@ -1,0 +1,10 @@
+{
+  "topicId": "debugging-state",
+  "title": "Debugging State Using Redux DevTools & Custom Loggers",
+  "content": "Definition:\nDevTools allow developers to inspect state changes.\n\nUse:\nTime-travel debugging, action inspection.\n\nImportance:\nHelps track complex bugs.\n\nAdvantages:\nFaster debugging, transparent state flow.",
+  "examples": [
+    "Time-travel to reproduce an issue",
+    "Log all actions and diffs in development",
+    "Inspect selector outputs for correctness"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "topicId": "redux-toolkit",
+  "title": "Redux Toolkit (RTK) — Slices, Store & Thunks",
+  "content": "Definition:\nRTK is an official Redux utility that simplifies configuration with slices, reducers, actions, and async thunks.\n\nUse:\nUsed for writing less code while managing complex global state.\n\nImportance:\nReduces boilerplate, improves dev experience.\n\nMajor Use & Advantages:\nFast state development, built-in async logic.",
+  "syntax": "const slice = createSlice({\n  name: 'cart',\n  initialState: [],\n  reducers: { addItem: (state, action) => { state.push(action.payload); } }\n});",
+  "examples": [
+    "CreateSlice for domain modules",
+    "createAsyncThunk for API calls",
+    "configureStore with middleware"
+  ]
+}

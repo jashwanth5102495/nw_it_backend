@@ -36,6 +36,9 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
   'http://localhost:5174',
+  'http://localhost:5175', // added to support current dev server
+  'http://localhost:5176', // support alternate Vite dev port
+  'http://localhost:5177', // Vite dev server port in use
 ].filter(Boolean); // Remove undefined/null values
 
 console.log('🔒 CORS Configuration:');
@@ -143,7 +146,8 @@ app.listen(PORT, async () => {
     console.log(`📊 API available at http://localhost:${PORT}/api`);
   } catch (error) {
     console.error('❌ Failed to connect to MongoDB:', error);
-    process.exit(1);
+    console.error('⚠️ Continuing to run without DB (limited functionality: auth, static routes).');
+    // Do not exit; keep server running for auth-only functionality in dev
   }
 });
 

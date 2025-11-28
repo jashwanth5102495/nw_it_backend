@@ -1,0 +1,10 @@
+{
+  "topicId": "state-architecture-best-practices",
+  "title": "Best Practices for Scalable State Architecture",
+  "content": "Definition:\nBest practices define guidelines for managing state efficiently.\n\nUse:\nEnsures long-term maintainability.\n\nImportance:\nLarge teams depend on consistency.\n\nAdvantages:\nReduces bugs, improves speed.",
+  "examples": [
+    "Define clear state ownership and boundaries",
+    "Normalize complex collections and use selectors",
+    "Keep view components free of domain logic"
+  ]
+}

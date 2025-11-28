@@ -1,0 +1,10 @@
+{
+  "id": 2,
+  "title": "Principles of Design Thinking for Frontend Developers",
+  "content": [
+    "Design Thinking is a structured methodology that involves understanding the user, defining problems, ideating solutions, prototyping, and testing. It encourages developers to prioritize empathy and user needs before writing any code. This makes the final product significantly more aligned with user expectations.",
+    "The use of Design Thinking lies in approaching problems from the user's perspective rather than a purely technical viewpoint. Developers can identify pain points, frustrations, and usability gaps early, long before they turn into costly redesigns. It supports creativity, experimentation, and better decision-making.",
+    "It is important because frontend engineers often get stuck building what is asked instead of what is needed. With Design Thinking, you evaluate assumptions, validate ideas through user feedback, and refine solutions based on real usage patterns. It elevates the quality of your final output dramatically.",
+    "The major use of Design Thinking is found in UI restructuring, new feature introductions, onboarding flows, dashboard creation, and improving existing user journeys. Its biggest advantage is reduced guesswork — your work becomes driven by evidence, not assumptions, which leads to stronger and more successful products."
+  ]
+}

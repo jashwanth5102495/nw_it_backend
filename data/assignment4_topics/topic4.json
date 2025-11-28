@@ -1,0 +1,10 @@
+{
+  "id": 4,
+  "title": "Applying Usability Heuristics in Real Projects",
+  "content": [
+    "Usability heuristics are established design rules used to evaluate and improve an interface. Jakob Nielsen introduced the 10 most common heuristics, such as consistency, user control, error prevention, and recognition over recall. These principles help spot design issues early.",
+    "Frontend developers use heuristics to test whether a UI feels natural, predictable, and forgiving. When implementing features, these guidelines ensure that design doesn’t confuse or overwhelm the user. This reduces friction and increases accessibility.",
+    "Heuristics are important because users don't read documentation — they rely on intuition. If a button is misplaced, unclear, or inconsistent, users instantly notice. Heuristics make your product predictable and easy to use without training.",
+    "Their major use is in UX audits, new feature testing, onboarding optimization, and error handling. The advantage is faster decision-making: instead of debating design choices endlessly, developers have a proven checklist to validate their work."
+  ]
+}

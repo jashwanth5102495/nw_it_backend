@@ -1,0 +1,10 @@
+{
+  "id": 5,
+  "title": "Accessibility (A11y) and Inclusive Design",
+  "content": [
+    "Accessibility ensures that all users — including those with disabilities — can access and use your interface. This includes screen reader support, keyboard navigation, contrast levels, readable text, and meaningful semantic markup. Inclusive design ensures that your product works for everyone, not just a typical user.",
+    "Frontend developers use accessibility guidelines (WCAG standards) to ensure the website follows legal and usability requirements. This includes adding alt text, correct labels, focus indicators, and navigation shortcuts. Accessibility also boosts SEO because search engines read semantic structure.",
+    "Accessibility is important because over 1 billion people worldwide live with disabilities, and many regions (EU, US) legally require accessible digital products. A non-accessible website loses customers, hurts brand reputation, and creates equity barriers.",
+    "Major uses include government applications, banking systems, e-commerce, educational portals, and large enterprise software. Advantages include improved usability for all users, better SEO ranking, stronger brand trust, and compliance with accessibility regulations."
+  ]
+}

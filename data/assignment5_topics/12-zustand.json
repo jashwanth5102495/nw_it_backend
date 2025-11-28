@@ -1,0 +1,11 @@
+{
+  "topicId": "zustand",
+  "title": "Zustand — Lightweight State Management",
+  "content": "Definition:\nZustand is a small but powerful state management library.\n\nUse:\nUsed for small-to-medium apps needing minimal overhead.\n\nImportance:\nSimplifies global state without Redux complexity.\n\nAdvantage:\nMinimal boilerplate, very fast.",
+  "syntax": "const useStore = create(set => ({\n  count: 0,\n  increment: () => set(state => ({ count: state.count + 1 }))\n}));",
+  "examples": [
+    "Tiny global store for UI preferences",
+    "Co-locate logic with hooks",
+    "Quick state without reducers"
+  ]
+}

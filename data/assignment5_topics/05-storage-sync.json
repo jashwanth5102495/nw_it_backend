@@ -1,0 +1,11 @@
+{
+  "topicId": "storage-sync",
+  "title": "State Synchronization with localStorage & sessionStorage",
+  "content": "Definition:\nState synchronization means storing state values in browser storage so that they persist even after refresh. localStorage stores data permanently; sessionStorage stores data only per session.\n\nUse:\nUsed for saving cart items, login tokens, preferences, recent searches, or form progress.\n\nImportance:\nPrevents users from losing data on refresh and improves user experience. It also reduces the number of API calls required.\n\nMajor Use & Advantages:\nEnhances persistence, reliability, and offline capability.",
+  "syntax": "useEffect(() => {\n  localStorage.setItem(\"theme\", theme);\n}, [theme]);",
+  "examples": [
+    "Persist cart items across refresh",
+    "Remember selected theme or language",
+    "Store last visited page or filters"
+  ]
+}

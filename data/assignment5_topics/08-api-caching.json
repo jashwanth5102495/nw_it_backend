@@ -1,0 +1,11 @@
+{
+  "topicId": "api-caching",
+  "title": "API Response Caching & Client-side Persistence",
+  "content": "Definition:\nCaching means storing API responses to avoid repeated calls.\n\nUse:\nUsed for dashboards, product catalogs, news feeds, etc.\n\nImportance:\nReduces server load, speeds up UI, and improves UX.\n\nMajor Use & Advantages:\nFast navigation, offline capability, reduced API cost.",
+  "syntax": "const cache = JSON.parse(localStorage.getItem(\"cache\"));",
+  "examples": [
+    "Cache product lists to avoid repeat fetches",
+    "Persist last search results for quick back nav",
+    "Use stale-while-revalidate for fast perceived loading"
+  ]
+}

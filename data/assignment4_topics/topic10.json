@@ -1,0 +1,10 @@
+{
+  "id": 10,
+  "title": "Designing for Mobile-first & Responsive UX",
+  "content": [
+    "Mobile-first design prioritizes small screens and constrained contexts, then scales up to larger viewports. Responsive UX adapts layout, touch targets, and content density to device capabilities. Performance and clarity are central to usable mobile experiences.",
+    "Use fluid grids, flexible images, and breakpoint-driven component variants. Optimize tap targets, simplify navigation, and reduce content per view. Lazy-load noncritical assets and prefer progressive disclosure to avoid overwhelming users.",
+    "It’s important because most traffic is mobile. Ignoring mobile yields poor engagement and high bounce rates. Mobile-first thinking forces prioritization of essential tasks and streamlines flows.",
+    "Major uses include navigation, forms, media galleries, and dashboards. Advantages include wider reach, better performance, and consistent experiences across phones, tablets, and desktops."
+  ]
+}

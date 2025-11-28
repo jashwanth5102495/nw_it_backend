@@ -249,6 +249,59 @@ async function seedAssignments() {
         { topicId: 'linting-eslint', title: 'ESLint & Formatting', content: 'Lint rules, plugins, Prettier, code style consistency.', syntax: "extends:['plugin:@typescript-eslint/recommended']", examples: ['Run lint in CI'] },
         { topicId: 'testing-vitest-jest', title: 'Testing Basics', content: 'Unit/integration tests, Testing Library, best practices.', syntax: "it('adds',()=>{ expect(add(2,3)).toBe(5) })", examples: ['User-centric assertions'] }
       ],
+      'frontend-intermediate-1': [
+        { topicId: 'devtools-intro', title: 'Introduction to Chrome DevTools & Its Interface', content: `Chrome DevTools is a built-in set of web developer tools inside Google Chrome. It provides an environment to inspect, analyze, and debug web apps directly in the browser, exposing what the browser knows — HTML structure, CSS rules, JavaScript execution, network activity, and performance metrics. The interface is divided into panels such as Elements, Console, Network, Sources, Application, and Performance, each supporting a different debugging and optimization task.
+
+DevTools helps frontend developers understand how the browser interprets their code. You can visually inspect changes, test different UI conditions, simulate screen sizes, and catch errors in real time. No external tools are needed; DevTools streamlines identifying problems and testing fixes instantly in the browser.
+
+Its importance lies in reducing development time and improving code accuracy. By giving full visibility into the internals of a webpage, DevTools empowers developers to fix issues efficiently before shipping. The major use is during debugging sessions where real-time edits help pinpoint issues without modifying source files. Overall, DevTools offers faster debugging, immediate visual feedback, and powerful performance diagnostics — essential for frontend engineers.` },
+        { topicId: 'devtools-dom', title: 'Inspecting and Manipulating the DOM in Real Time', content: `The DOM (Document Object Model) is a structured representation of a webpage that browsers render. Chrome DevTools lets you inspect this DOM visually and interact with individual elements. When an element is selected, its HTML and CSS appear instantly, revealing how the page is composed. Real-time inspection enables verification of styles, the box model, computed CSS, and element hierarchies.
+
+Primary use cases include correcting UI issues such as alignment problems, incorrect styling, and container sizing errors. By editing the DOM or CSS directly in DevTools, developers can test different styling approaches without changing source files, speeding up the design-debugging workflow and experimentation. This is also effective for diagnosing issues caused by dynamic DOM updates from frameworks like React.
+
+Its importance is the ability to identify layout issues that are difficult to detect in code alone. Major use is during UI debugging to pinpoint why elements render incorrectly. Advantages include real-time changes without permanence, visualization of CSS inheritance, and isolating problematic elements — making DOM inspection one of DevTools’ most powerful features.` },
+        { topicId: 'devtools-js-debug', title: 'Debugging JavaScript Using Breakpoints & Watch Expressions', content: `Breakpoints are intentional stopping points placed in JavaScript to pause execution at critical moments. When the browser reaches a breakpoint, DevTools halts the script and allows inspection of values, variables, and control flow. Watch expressions track custom variables or expressions continuously, updating them as the program runs. Together, breakpoints and watch expressions provide precise control over debugging.
+
+These tools identify logic errors, incorrect variable values, or unexpected function behavior. Instead of combing through console logs, developers step through code line by line using breakpoints. Watch expressions make it easy to observe variable changes over time and find the exact point where data becomes incorrect, dramatically increasing debugging accuracy.
+
+Their importance is in revealing bugs that are otherwise hard to detect — particularly in event-driven functions, asynchronous operations, and complex state management. Advantages include eliminating guesswork, improving reliability, and understanding the full execution lifecycle. Breakpoints make debugging controlled, professional, and efficient.` },
+        { topicId: 'devtools-network', title: 'Network Panel: Understanding Requests, Status Codes & Payloads', content: `The Network panel shows all network activity for a page — API calls, image loads, CSS/JS resources, and more. Each request includes its status code, headers, timing, and payload (data sent/received), making it a complete monitoring tool for how a page communicates with servers.
+
+Primary use is debugging API requests: verify whether a request succeeded, failed, or was blocked; inspect payloads for correctness; and analyze load times, render-blocking resources, and caching behavior. This panel is central to optimizing network performance.
+
+Its importance is in identifying backend or API-related issues, especially during integration testing with real endpoints. Advantages include full visibility into request lifecycles, easy reproduction of errors, and understanding latency issues. The Network panel is indispensable for frontend developers working with APIs.` },
+        { topicId: 'devtools-performance', title: 'Performance Panel: Identifying Rendering Bottlenecks', content: `The Performance panel helps analyze how efficiently a webpage runs in terms of rendering, scripting, and painting. It shows a detailed breakdown of CPU usage, layout calculations, animations, and rendering phases. Developers can record a performance session to see exactly what processes slowed down the website and caused delays or jank.
+
+The main use of this panel is to diagnose sluggish interfaces, laggy animations, and slow-loading components. By visualizing the browser's workload, developers can see which parts of their code trigger expensive operations. This guides them to optimize components, minimize re-renders, and improve overall page responsiveness.
+
+Its importance lies in providing insights that cannot be detected by simple inspection. The major use is during performance optimization when developers aim to improve user experience, especially on low-end devices. Advantages include discovering hidden bottlenecks, improving animation smoothness, and achieving higher performance standards. This panel is essential for ensuring that a frontend app runs smoothly.` },
+        { topicId: 'devtools-lighthouse', title: 'Lighthouse Audits: Performance, SEO, Accessibility Checks', content: `Lighthouse is an automated tool inside DevTools that generates detailed reports on website performance, accessibility, SEO, and best practices. It evaluates various metrics like page speed, render-blocking scripts, color contrast, and semantic HTML usage. By running a Lighthouse audit, developers get actionable suggestions to improve their site.
+
+The main use of Lighthouse is improving website quality across multiple categories. It identifies problems that affect search engine ranking, accessibility compliance, and overall user experience. Lighthouse also helps compare performance scores before and after changes, ensuring measurable improvement.
+
+Its importance lies in providing standardized metrics that follow Google’s recommendations. The major use is during optimization phases when developers want to improve loading speed and accessibility. Advantages include automatic suggestions, clear scoring, and the ability to test mobile and desktop performance. Lighthouse helps developers build high-quality, user-friendly websites.` },
+        { topicId: 'devtools-application', title: 'Application Panel: localStorage, sessionStorage & Cookies Debugging', content: `The Application panel provides access to a website’s storage mechanisms including localStorage, sessionStorage, cookies, IndexedDB, and cache. It allows developers to view, modify, and delete stored data instantly. This is crucial for debugging apps that rely on persistent storage, authentication tokens, or caching.
+
+Its main use is verifying if data stored by the application matches expectations. Developers can check whether authentication tokens are saved correctly, whether cache items appear as intended, and whether storage updates occur after user interactions. It also helps detect storage-related bugs that cause login issues or incorrect UI states.
+
+The importance of the Application panel lies in its ability to reveal hidden data that affects app behavior. The major use is authentication debugging, where developers verify token storage and expiry. Advantages include full transparency into client-side storage and faster debugging of persistent data issues. This panel is especially important for React apps that rely on localStorage for state persistence.` },
+        { topicId: 'react-devtools', title: 'Monitoring React Components Using React DevTools', content: `React DevTools is a browser extension that integrates directly into DevTools and allows developers to inspect React components. It shows component structure, props, state, and hooks in real time. This makes it easier to understand how React renders and updates the UI, especially in complex applications.
+
+The main use is debugging component logic. Developers can check whether props are passed correctly, whether state updates as expected, and whether unnecessary re-renders occur. It also reveals the component hierarchy, making it easier to track where data flows from and how UI changes propagate.
+
+Its importance lies in reducing debugging time for React apps. The major use is during debugging of component nesting issues, state management bugs, and props mismatch. Advantages include visualizing complex component trees, tracking performance, and checking hook values live. React DevTools is essential for all React developers.` },
+        { topicId: 'source-maps', title: 'Source Maps: How They Work & Why They Matter', content: `Source maps are files that map compressed or minified production code back to the original source code. Since modern build tools compress code to improve performance, debugging the minified output becomes difficult. Source maps bridge this gap by allowing DevTools to display the original code during debugging sessions.
+
+The main use of source maps is debugging production errors. When users encounter issues in the live application, developers can use source maps to trace the bug back to the original file. This makes debugging easier and much more accurate, even after bundling and minification.
+
+The importance of source maps lies in their ability to preserve developer-friendly debugging while maintaining performance. The major use is during error tracking in production environments. Advantages include better error tracing, safer shipping of minified code, and simplified debugging workflows. Source maps ensure that production builds remain both efficient and debuggable.` },
+        { topicId: 'cors-network', title: 'Handling CORS Errors & Network-Level Debugging', content: 'Origins, preflight, headers (CORS), server fixes, proxies, and devtools diagnosis.' },
+        { topicId: 'memory-leaks', title: 'Identifying Memory Leaks & Using the Memory Profiler', content: 'Heap snapshots, allocation sampling, detached DOM nodes, and event listener leaks.' },
+        { topicId: 'mobile-responsive', title: 'Mobile View Debugging & Responsive Design Tooling', content: 'Device emulation, touch simulation, media queries, layout bugs across breakpoints.' },
+        { topicId: 'network-throttle', title: 'Simulating Network Speed, Offline Mode & Throttling', content: 'Network conditions, CPU throttling, offline testing, and resiliency checks.' },
+        { topicId: 'stack-traces', title: 'Error Stack Tracing & Debugging Minified Production Code', content: 'Trace errors, de-obfuscate with source maps, capture logs, and reproduce issues.' },
+        { topicId: 'debug-best-practices', title: 'Best Practices for Debugging & Writing Debug-Friendly Code', content: 'Guardrails, structured logging, feature flags, assertions, and deterministic repros.' }
+      ],
       'ai-tools-1': [
         { topicId: 'ai-compliance', title: 'Compliance & Licensing', content: 'Copyright safety, usage rights, model licensing, and corporate policies.' },
         { topicId: 'ai-style-systems', title: 'Style Reference Systems', content: 'Guides, palettes, typography, and consistent brand visual language.' },
@@ -385,8 +438,6 @@ async function seedAssignments() {
     const prepared = assignmentData.map(ensureMinTopics);
     const insertedAssignments = await Assignment.insertMany(prepared);
     console.log(`✅ Successfully seeded ${insertedAssignments.length} assignments`);
-    
-    // Display summary
     console.log('\n📊 Assignment Summary:');
     insertedAssignments.forEach(assignment => {
       console.log(`  • ${assignment.title} (ID: ${assignment.assignmentId})`);

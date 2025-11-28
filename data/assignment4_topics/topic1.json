@@ -1,0 +1,10 @@
+{
+  "id": 1,
+  "title": "Introduction to UI/UX and Why It Matters",
+  "content": [
+    "UI/UX refers to how a digital product looks (UI) and how it feels or works (UX). User Interface focuses on elements like colors, buttons, typography, layout, and visual design. User Experience focuses on usability, navigation quality, smoothness, problem-solving ability, and how effectively a user achieves their goals. Both together define how satisfying and intuitive a product becomes for its audience.",
+    "The primary use of UI/UX is to create interfaces that are not just attractive but functional. Good UI guides the user visually, while good UX reduces confusion and ensures that a product supports a user’s needs. A well-designed interface can dramatically improve conversion, retention, and user satisfaction.",
+    "UI/UX is extremely important because users today have countless alternatives. If your site or app is slow, confusing, or visually cluttered, they will leave immediately. This is why companies like Apple and Google invest heavily in consistency, accessibility, and user comfort. A strong UI/UX foundation cuts development costs, reduces support tickets, and enhances brand trust.",
+    "Major use cases include website development, e-commerce stores, SaaS dashboards, mobile apps, and enterprise software. The advantage of mastering UI/UX as a frontend engineer is that your code will turn into usable experiences that users love, not just functional interfaces. You will also collaborate better with designers and build features with more empathy and clarity."
+  ]
+}

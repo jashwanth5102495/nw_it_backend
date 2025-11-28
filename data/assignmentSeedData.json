@@ -2538,13 +2538,9 @@
     {
       "assignmentId": "frontend-intermediate-1",
       "courseId": "frontend-intermediate",
-      "title": "Modern JavaScript Patterns",
-      "description": "Deep dive into ES6+ features, modules, async/await, and error handling.",
-      "topics": [
-        { "topicId": "es-modules", "title": "ES Modules", "content": "import/export, default vs named, tree shaking" },
-        { "topicId": "async-await", "title": "Async/Await", "content": "promise wrapping, error handling with try/catch" },
-        { "topicId": "patterns", "title": "Patterns", "content": "factory, singleton, observer basics in JS" }
-      ],
+      "title": "Assignment 1 — Mastering Developer Tools & Frontend Debugging",
+      "description": "15-topic deep dive into Chrome DevTools, debugging workflows, performance analysis, and network troubleshooting.",
+      "topics": [],
       "questions": [
         { "questionId": "1", "prompt": "Which statement imports a named export?", "options": ["import x from 'lib'", "import { x } from 'lib'", "require('lib')", "import * as lib from 'lib'"], "correctAnswer": 1 },
         { "questionId": "2", "prompt": "Async/await is built on which feature?", "options": ["Generators", "Promises", "Callbacks", "Observables"], "correctAnswer": 1 },

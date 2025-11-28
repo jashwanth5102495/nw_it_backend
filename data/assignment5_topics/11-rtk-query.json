@@ -1,0 +1,10 @@
+{
+  "topicId": "rtk-query",
+  "title": "Async State Management Using RTK Query",
+  "content": "Definition:\nRTK Query is a data fetching library inside Redux Toolkit.\n\nUse:\nUsed for caching, re-fetching, and managing server state.\n\nImportance:\nHandles API lifecycle automatically.\n\nMajor Use & Advantages:\nReduces code, improves performance.",
+  "examples": [
+    "Auto cache and deduplicate API calls",
+    "Background refetch and invalidation",
+    "Simplified loading/error states"
+  ]
+}

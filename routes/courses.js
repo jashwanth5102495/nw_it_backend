@@ -274,16 +274,28 @@ router.post('/purchase', async (req, res) => {
     
     console.log("Courses Purchase: ", { courseId, studentId, paymentId, referralCode });
 
-    // Verify course exists
-    let course = await Course.findOne({ courseId: courseId });
-    if (!course && courseId.match(/^[0-9a-fA-F]{24}$/)) {
+    // Verify course exists (robust resolution: slug, uppercase ID, ObjectId, title)
+    let course = await Course.findOne({ courseId });
+    // Try uppercase variant used by some seed scripts
+    if (!course && typeof courseId === 'string') {
+      course = await Course.findOne({ courseId: courseId.toUpperCase() });
+    }
+    // Try ObjectId form
+    if (!course && courseId && courseId.match(/^[0-9a-fA-F]{24}$/)) {
       course = await Course.findById(courseId);
+    }
+    // Try title fuzzy match constructed from slug words (e.g., "frontend-intermediate" -> /frontend.*intermediate/i)
+    if (!course && typeof courseId === 'string') {
+      const words = courseId.split('-').filter(Boolean);
+      const pattern = words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.*');
+      const titleRegex = new RegExp(pattern, 'i');
+      course = await Course.findOne({ title: { $regex: titleRegex } });
     }
     
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: 'Course not found'
+        message: `Course not found with courseId: ${courseId}`
       });
     }
 
@@ -369,7 +381,7 @@ router.post('/purchase', async (req, res) => {
         paymentId: payment.paymentId,
         courseId: course.courseId || course._id, // Return the string courseId if available
         finalPrice,
-        discount
+        discount: Math.round((discountAmount / course.price) * 100)
       }
     });
   } catch (error) {

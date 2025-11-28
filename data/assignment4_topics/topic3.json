@@ -1,0 +1,10 @@
+{
+  "id": 3,
+  "title": "Understanding User Flows and Task Flows",
+  "content": [
+    "User flows describe how a user moves through a product to achieve a goal. Task flows zoom into a single task and explain the step-by-step journey a user must complete. Both are essential blueprints for planning navigation, content placement, and efficient interface layout.",
+    "Frontend developers use these flows to visualize how many screens, clicks, or actions a user must go through. This allows them to build cleaner routes, predictable patterns, and smooth transitions. Without flows, interfaces often feel chaotic or confusing.",
+    "They are important because they expose friction points. If users get stuck or drop off at certain steps, it's usually because the flow wasn’t designed thoughtfully. These maps help developers identify redundant paths, confusing labels, or unnecessary steps.",
+    "Major use cases include e-commerce checkout, registration pages, authentication screens, payment gateways, and dashboard navigation. The advantage is that you write cleaner code with a clear structure since the UX flow acts as your development guide, reducing rework and user frustration."
+  ]
+}

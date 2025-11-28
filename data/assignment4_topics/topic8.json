@@ -1,0 +1,10 @@
+{
+  "id": 8,
+  "title": "Visual Hierarchy & Layout Patterns",
+  "content": [
+    "Visual hierarchy is the arrangement of elements by importance — size, weight, spacing, color, and position. Layout patterns are common interface structures like F-pattern, Z-pattern, and card grids that users intuitively understand.",
+    "Frontend developers use hierarchy to highlight primary actions, ensure smooth readability, and prevent clutter. Without hierarchy, everything competes for attention, making the interface stressful.",
+    "Hierarchy is important because users scan, not read. Developers must guide the eye from most important elements (headings, CTAs) to secondary content. Good layout patterns reduce cognitive load and make the UI predictable.",
+    "Major uses include dashboards, pricing pages, product listing grids, and landing pages. Advantages include improved readability, reduced confusion, and higher engagement rates."
+  ]
+}

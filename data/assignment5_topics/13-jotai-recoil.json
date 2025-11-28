@@ -1,0 +1,10 @@
+{
+  "topicId": "jotai-recoil",
+  "title": "Jotai & Recoil — Atomic State Patterns",
+  "content": "Definition:\nAtomic state libraries store values in small independent pieces (atoms).\n\nUse:\nUsed for apps requiring modular, isolated state.\n\nImportance:\nBetter performance and flexibility.\n\nAdvantages:\nUpdates affect only the atoms used.",
+  "examples": [
+    "Fine-grained subscriptions to atoms",
+    "Derived atoms/selectors for computed state",
+    "Replace global monolith with small units"
+  ]
+}

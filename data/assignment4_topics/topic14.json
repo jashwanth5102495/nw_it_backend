@@ -1,0 +1,10 @@
+{
+  "id": 14,
+  "title": "Reducing Cognitive Load in UI",
+  "content": [
+    "Cognitive load refers to the mental effort users expend to understand and use an interface. High cognitive load causes confusion, errors, and abandonment. Reducing it means simplifying choices, clarifying structure, and presenting information progressively so users can focus on what matters at each step.",
+    "Use clear hierarchy, chunk information into small groups, and remove nonessential elements from primary flows. Apply progressive disclosure (show details on demand), default sensible values, and limit simultaneous decisions. Provide recognizable patterns, consistent terminology, and clear affordances so users don’t need to relearn basic interactions.",
+    "It’s important because users have limited attention and are often multitasking on small screens or in distracting environments. Lower cognitive load improves comprehension, speeds task completion, and reduces errors. It also makes interfaces more inclusive for users with cognitive constraints or those new to the product.",
+    "Major uses include checkout, onboarding, settings, and data-entry flows. Advantages include higher conversions, fewer help requests, and better retention. By designing for minimal mental effort, teams create calmer, faster experiences that feel intuitive and supportive rather than overwhelming."
+  ]
+}

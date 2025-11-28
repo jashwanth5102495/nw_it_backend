@@ -1,0 +1,10 @@
+{
+  "id": 9,
+  "title": "Typography Fundamentals for Digital Interfaces",
+  "content": [
+    "Typography governs readability and tone through font selection, size, weight, line-height, letter-spacing, and paragraph spacing. It sets the voice of your product and influences scanning behavior, comprehension, and perceived quality.",
+    "Use type scales to define consistent sizes across headings, body, captions, and UI labels. Choose legible fonts with good x-height, avoid extreme weights for body text, and ensure sufficient contrast. Pair fonts carefully: one for UI, one for editorial content, if needed.",
+    "Typography is important because most interfaces are text-heavy. Poor type choices cause fatigue, misunderstanding, and abandonment. Good typography clarifies hierarchy, improves accessibility, and supports brand consistency.",
+    "Major uses include forms, tables, documentation, and marketing pages. Advantages include faster reading, fewer mistakes, and a more professional look. Good typographic systems scale cleanly across screen sizes and densities."
+  ]
+}

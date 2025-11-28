@@ -1,0 +1,10 @@
+{
+  "id": 6,
+  "title": "ARIA Roles and Semantic Structure",
+  "content": [
+    "ARIA (Accessible Rich Internet Applications) roles provide additional information to assistive technologies about how elements behave. They help screen readers interpret buttons, menus, alerts, and dynamic components. However, ARIA supplements — not replaces — semantic HTML.",
+    "Frontend developers use ARIA roles when building custom UI components like modals, dropdowns, tabs, and accordions that do not behave like standard HTML elements. ARIA attributes such as aria-label, aria-expanded, and role=\"button\" improve accessibility dramatically.",
+    "ARIA is important because without proper roles, a screen reader may misinterpret components or ignore them entirely. Semantic structure combined with ARIA ensures that interfaces remain usable to visually impaired users.",
+    "Major use cases include complex dashboards, single-page applications, React components, and interactive UI widgets. Advantages include enhanced accessibility, legal compliance, and improved user satisfaction across diverse audiences."
+  ]
+}

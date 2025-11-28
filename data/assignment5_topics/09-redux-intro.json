@@ -1,0 +1,11 @@
+{
+  "topicId": "redux-intro",
+  "title": "Introduction to Redux — Core Principles",
+  "content": "Definition:\nRedux is a predictable state container based on three principles:\n– Single store\n– State is read-only\n– Changes made via pure functions (reducers)\n\nUse:\nUsed for large-scale apps needing centralized state.\n\nImportance:\nPredictability, debugging, scalability.\n\nMajor Use & Advantages:\nUseful in authentication, dashboards, complex data flows.",
+  "syntax": "store.dispatch({ type: \"ADD_ITEM\", payload: item });",
+  "examples": [
+    "Centralized auth/session state",
+    "Cross-page notifications/toasts",
+    "Complex workflow state transitions"
+  ]
+}

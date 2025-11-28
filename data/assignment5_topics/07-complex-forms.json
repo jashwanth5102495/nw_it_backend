@@ -1,0 +1,11 @@
+{
+  "topicId": "complex-forms",
+  "title": "Managing Complex Forms with Controlled & Uncontrolled Inputs",
+  "content": "Definition:\nControlled inputs are managed by React state. Uncontrolled inputs rely on DOM refs.\n\nUse:\nControlled forms allow validation, dynamic UI, and controlled submission. Uncontrolled forms are better for simple data entry.\n\nImportance:\nForms are essential for authentication, checkout, settings, dashboards, etc.\n\nMajor Use & Advantages:\nControlled = More control\nUncontrolled = Better performance for large forms",
+  "syntax": "const [value, setValue] = useState(\"\");\n<input value={value} onChange={(e) => setValue(e.target.value)} />",
+  "examples": [
+    "Controlled: live validation for signup",
+    "Uncontrolled: simple contact form with refs",
+    "Hybrid: controlled key fields, uncontrolled others"
+  ]
+}

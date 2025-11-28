@@ -1,0 +1,10 @@
+{
+  "id": 7,
+  "title": "Color Psychology and Emotional Design",
+  "content": [
+    "Color psychology explains how colors influence user emotions and behavior. Emotional design uses these principles to create positive emotional responses in users — trust, curiosity, calmness, urgency, or excitement. This directly affects engagement and conversion.",
+    "Frontend developers use color contrast, palette systems, branding rules, and hierarchy to guide user attention. A well-chosen color palette can highlight key actions like \"Buy Now,\" signal errors, or reinforce brand personality.",
+    "Color psychology is important because visual perception happens within milliseconds. Users instantly judge whether a product feels trustworthy or professional. Bad color choices cause bounce rates, eye strain, or confusion.",
+    "Major uses include CTA buttons, form validation, onboarding screens, banners, and landing pages. Advantages include improved readability, stronger brand identity, and better user engagement."
+  ]
+}

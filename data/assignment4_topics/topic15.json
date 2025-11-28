@@ -1,0 +1,10 @@
+{
+  "id": 15,
+  "title": "UX Research Basics: Surveys, User Testing, Heatmaps",
+  "content": [
+    "UX research collects evidence about user behavior and needs to guide design decisions. Surveys capture attitudes and self-reported experiences at scale. Moderated or unmoderated user testing observes users performing tasks to uncover friction points. Heatmaps and click maps visualize where attention and interaction occur across screens.",
+    "Use surveys to understand perceptions before and after feature releases. Run task-based tests with target users to validate flows (onboarding, checkout) and identify confusing steps, labels, or layouts. Analyze heatmaps to spot ignored elements, crowded areas, and scroll patterns, then refine hierarchy and placement.",
+    "Research is important because teams often rely on assumptions. Evidence reduces bias and helps prioritize changes that measurably improve outcomes. Regular, lightweight studies keep the product aligned with real user needs and prevent costly missteps.",
+    "Major uses include feature ideation, usability audits, and conversion optimization. Advantages include clearer priorities, faster consensus, and designs that reflect actual behavior rather than internal guesses. Even simple, continuous research loops lead to more effective, user-centered products."
+  ]
+}

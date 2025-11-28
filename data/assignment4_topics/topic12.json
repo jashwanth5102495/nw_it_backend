@@ -1,0 +1,10 @@
+{
+  "id": 12,
+  "title": "Using Wireframes and Prototypes Effectively",
+  "content": [
+    "Wireframes outline structure and hierarchy without visual polish. Prototypes simulate interactions to test flows and usability. Together, they de-risk development by validating ideas before costly implementation.",
+    "Use low-fidelity wireframes to explore concepts rapidly, then move to interactive prototypes for key journeys (onboarding, checkout). Collect feedback from stakeholders and users, iterate fast, and document decisions to align teams.",
+    "This is important because assumptions are expensive. Early testing prevents scope creep and forces clarity about goals and success metrics. Wireframes also help developers anticipate component needs and tech constraints.",
+    "Major uses include feature ideation, UX audits, and cross-functional alignment. Advantages include faster consensus, fewer redesigns, and smoother handoff to engineering with clear interaction intent."
+  ]
+}

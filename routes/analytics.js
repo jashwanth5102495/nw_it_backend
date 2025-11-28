@@ -455,4 +455,87 @@ router.post('/commissions/bulk-update', async (req, res) => {
   }
 });
 
+// Add Active Users analytics endpoint
+router.get('/analytics/active-users', async (req, res) => {
+  try {
+    const windowMinutes = parseInt(req.query.windowMinutes, 10) || 10;
+    const since = new Date(Date.now() - windowMinutes * 60 * 1000);
+
+    // Count distinct students with an active session or recent activity
+    const activeAgg = await require('../models/StudentProgress').aggregate([
+      {
+        $match: {
+          $or: [
+            { 'currentSession.isActive': true },
+            { lastActivityAt: { $gte: since } }
+          ]
+        }
+      },
+      { $group: { _id: '$studentId' } },
+      { $count: 'activeCount' }
+    ]);
+
+    const activeCount = (activeAgg[0] && activeAgg[0].activeCount) || 0;
+
+    // Aggregate total time spent per student, latest activity, and session flag
+    const usersAgg = await require('../models/StudentProgress').aggregate([
+      {
+        $group: {
+          _id: '$studentId',
+          totalTimeSpent: { $sum: '$totalTimeSpent' },
+          lastActivityAt: { $max: '$lastActivityAt' },
+          isActiveSession: { $max: '$currentSession.isActive' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'students',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'student'
+        }
+      },
+      { $unwind: '$student' },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'student.user_id',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          studentMongoId: '$_id',
+          studentId: '$student.studentId',
+          name: { $concat: ['$student.firstName', ' ', '$student.lastName'] },
+          email: '$student.email',
+          username: '$user.username',
+          totalTimeSpent: 1,
+          lastActivityAt: 1,
+          isActiveSession: 1
+        }
+      },
+      { $sort: { totalTimeSpent: -1 } }
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        activeCount,
+        windowMinutes,
+        users: usersAgg
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching active users analytics:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching active users analytics',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

@@ -1,0 +1,10 @@
+{
+  "id": 13,
+  "title": "UX Writing and Microcopy",
+  "content": [
+    "UX writing shapes clarity and tone through concise, helpful copy in UI elements: buttons, labels, placeholders, tooltips, alerts, and empty states. Microcopy guides users through tasks and sets expectations.",
+    "Use plain language, action-oriented verbs, and context-aware messages. Avoid jargon and humor that obscures meaning. Provide helpful error messages with next steps and avoid blaming the user.",
+    "It’s important because words are part of the interface. Good microcopy reduces errors, increases conversion, and supports accessibility, especially for non-native speakers or users with cognitive constraints.",
+    "Major uses include forms, authentication, onboarding, and help content. Advantages include faster task completion, fewer support requests, and a friendly, trustworthy product voice."
+  ]
+}

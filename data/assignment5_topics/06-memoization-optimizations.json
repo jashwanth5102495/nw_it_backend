@@ -1,0 +1,11 @@
+{
+  "topicId": "memoization-optimizations",
+  "title": "Optimizing Re-renders with memo, useMemo & useCallback",
+  "content": "Definition:\nReact.memo prevents unnecessary re-renders. useMemo caches expensive calculations. useCallback caches functions to avoid re-rendering children.\n\nUse:\nUsed in performance-heavy apps like dashboards, charts, and rendering lists.\n\nImportance:\nOptimizing re-renders prevents slow UI and enhances performance.\n\nMajor Use & Advantages:\nImproves speed, especially when components rely on heavy logic.",
+  "syntax": "const cachedValue = useMemo(() => compute(value), [value]);\nconst memoizedFn = useCallback(() => doSomething(), []);",
+  "examples": [
+    "Memoize filtered list computations",
+    "Cache chart transforms and derived metrics",
+    "Avoid recreation of handlers passed to child components"
+  ]
+}
