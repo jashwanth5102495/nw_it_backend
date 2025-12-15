@@ -9,6 +9,7 @@ const { authenticateStudent, authorizeOwnProfile } = require('../middleware/auth
 const router = express.Router();
 const { OAuth2Client } = require('google-auth-library');
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID);
+const Assignment = require('../models/Assignment');
 
 // Utility: resolve course by human-friendly courseId or Mongo ObjectId
 function escapeRegex(str) {
@@ -37,7 +38,11 @@ async function resolveCourseId(courseIdParam) {
     'frontend-advanced': ['Frontend Development - Advanced'],
     'devops-beginner': ['DEVOPS-BEGINNER', 'DevOps - Beginner'],
     'devops-intermediate': ['DEVOPS-INTERMEDIATE', 'DevOps - Intermediate'],
-    'ai-tools-mastery': ['AI-TOOLS-MASTERY', 'AI Tools Mastery']
+    'ai-tools-mastery': ['AI-TOOLS-MASTERY', 'AI Tools Mastery'],
+    // Added networking synonyms
+    'networking-beginner': ['NETWORKING-BEGINNER', 'Networking - Beginner', 'Networking Beginner'],
+    'networking-intermediate': ['NETWORKING-INTERMEDIATE', 'Networking - Intermediate', 'Networking Intermediate'],
+    'networking-advanced': ['NETWORKING-ADVANCED', 'Networking - Advanced', 'Networking Advanced']
   };
   const candidates = [
     courseIdParam,
@@ -787,19 +792,8 @@ router.post('/:id/enroll', authenticateStudent, authorizeOwnProfile, async (req,
       });
     }
 
-    // Find course by courseId field (accept various cases and ObjectId)
-    const courses = await Course.find();
-    let course = await Course.findOne({ courseId: courseId });
-    console.log("Course in DB: ", course);
-    if (!course) {
-      course = await Course.findOne({ courseId: (courseId || '').toUpperCase() });
-    }
-    if (!course) {
-      course = await Course.findOne({ courseId: (courseId || '').toLowerCase() });
-    }
-    if (!course && courseId && courseId.match(/^[0-9a-fA-F]{24}$/)) {
-      course = await Course.findById(courseId);
-    }
+    // Resolve course robustly (supports ObjectId, slug, title, synonyms)
+    let course = await resolveCourseId(courseId);
     
     console.log('Found course:', course ? course.title : 'Not found');
     console.log('Searching for courseId:', courseId);
@@ -1555,13 +1549,24 @@ router.put('/:id/progress/assignment', authenticateStudent, authorizeOwnProfile,
     if (timeSpent !== undefined) assignment.timeSpent += timeSpent;
     if (feedback) assignment.feedback = feedback;
 
-    // Auto-grade: mark completed when score >= 50% of max (5/10 or more)
+    // Auto-grade: mark completed when percentage > passingPercentage
     if (
       typeof assignment.score === 'number' &&
-      typeof assignment.maxScore === 'number'
+      typeof assignment.maxScore === 'number' &&
+      assignment.maxScore > 0
     ) {
+      const percent = (assignment.score / assignment.maxScore) * 100;
+      let passing = 50; // default fallback
+      try {
+        const dbAssignment = await Assignment.findOne({ assignmentId });
+        if (dbAssignment && typeof dbAssignment.passingPercentage === 'number') {
+          passing = dbAssignment.passingPercentage;
+        }
+      } catch (e) {
+        // ignore lookup errors
+      }
       const prevStatus = assignment.status;
-      const passedThreshold = assignment.score >= (assignment.maxScore * 0.5);
+      const passedThreshold = percent > passing; // strictly greater than configured threshold
       if (passedThreshold && prevStatus !== 'graded') {
         assignment.status = 'graded';
         assignment.completedAt = new Date();

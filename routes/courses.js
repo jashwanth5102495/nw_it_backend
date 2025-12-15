@@ -418,32 +418,31 @@ router.get('/purchased/:studentId', authenticateStudent, async (req, res) => {
         message: 'Access denied: you can only view your own purchased courses.'
       });
     }
-    
-    // If the parameter looks like an email, find the student by email first
-    const student = await Student.findOne({ email: studentIdentifier }).populate({
-      path: 'enrolledCourses.courseId',
-      model: 'Course'
-    });
+
+    // Resolve student by email or _id
+    const student = isEmailParam
+      ? await Student.findOne({ email: studentIdentifier }).populate({ path: 'enrolledCourses.courseId', model: 'Course' })
+      : await Student.findById(studentIdentifier).populate({ path: 'enrolledCourses.courseId', model: 'Course' });
+
     if (!student) {
       return res.json({
         success: true,
         data: [],
         count: 0,
-        message: 'No student found with this email'
+        message: 'No student found'
       });
     }
-    
+
     // Transform enrolled courses to include full course details and payment status
-    const purchasedCourses = await Promise.all(student.enrolledCourses.map(async (enrollment) => {
+    const enrollmentEntries = await Promise.all(student.enrolledCourses.map(async (enrollment) => {
       const course = enrollment.courseId;
-      
+
       // Find the payment record for this course and student - Payment model uses ObjectId for studentId
       const payment = await Payment.findOne({
-        studentId: student._id, // This is correct - Payment model expects ObjectId
+        studentId: student._id, // Payment model expects ObjectId
         courseId: course._id
       }).sort({ createdAt: -1 }); // Get the latest payment record
-      console.log("Payment found for course", course.title, ":", payment);
-      
+
       return {
         id: course._id.toString(),
         courseId: course.courseId || course._id.toString(),
@@ -470,11 +469,54 @@ router.get('/purchased/:studentId', authenticateStudent, async (req, res) => {
         // Enrollment specific fields
         enrollmentStatus: enrollment.status,
         enrollmentConfirmationStatus: enrollment.confirmationStatus,
-        paymentId: enrollment.paymentId
+        paymentId: payment ? payment.paymentId : enrollment.paymentId || null
       };
     }));
-    
-    console.log("Purchased Courses with Payment Status: ", purchasedCourses);
+
+    // Build payment-only entries for courses not in enrollments
+    const payments = await Payment.find({ studentId: student._id }).populate('courseId');
+    const paymentEntries = payments.map((payment) => {
+      const course = payment.courseId;
+      if (!course) {
+        return null;
+      }
+      return {
+        id: course._id.toString(),
+        courseId: course.courseId || course._id.toString(),
+        title: course.title,
+        category: course.category,
+        level: course.level,
+        description: course.description,
+        technologies: course.technologies,
+        price: course.price,
+        duration: course.duration,
+        projects: course.projects || 0,
+        modules: course.modules || [],
+        instructor: course.instructor,
+        enrollmentDate: payment.paymentDate, // use payment date as placeholder
+        progress: 0,
+        status: 'pending',
+        paymentStatus: payment.status,
+        confirmationStatus: payment.confirmationStatus || 'waiting_for_confirmation',
+        transactionId: payment.transactionId,
+        paymentMethod: payment.paymentMethod,
+        adminConfirmedBy: payment.adminConfirmedBy || null,
+        adminConfirmedAt: payment.adminConfirmedAt || null,
+        enrollmentStatus: null,
+        enrollmentConfirmationStatus: null,
+        paymentId: payment.paymentId
+      };
+    }).filter(Boolean);
+
+    // Deduplicate by course ID, prefer enrollment data if present
+    const byCourseId = new Map();
+    for (const entry of [...paymentEntries, ...enrollmentEntries]) {
+      const key = entry.id;
+      if (!byCourseId.has(key) || entry.enrollmentStatus) {
+        byCourseId.set(key, entry);
+      }
+    }
+    const purchasedCourses = Array.from(byCourseId.values());
 
     res.json({
       success: true,

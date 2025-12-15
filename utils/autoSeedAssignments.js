@@ -73,21 +73,37 @@ function ensureMinTopics(assignment) {
 async function seedIfEmpty() {
   try {
     const count = await Assignment.countDocuments();
-    if (count > 0) {
-      console.log(`📚 Assignments already present (${count}). Skipping auto-seed.`);
-      return;
-    }
 
     const jsonPath = path.join(__dirname, '..', 'data', 'assignmentSeedData.json');
     const raw = fs.readFileSync(jsonPath, 'utf-8');
     const data = JSON.parse(raw);
 
-    const prepared = data.map(ensureMinTopics);
-    const inserted = await Assignment.insertMany(prepared);
+    // If empty, seed all
+    if (count === 0) {
+      const preparedAll = data.map(ensureMinTopics);
+      const inserted = await Assignment.insertMany(preparedAll);
+      console.log(`✅ Auto-seeded ${inserted.length} assignments (collection was empty)`);
+      inserted.slice(0, 5).forEach(a => {
+        console.log(`  • ${a.title} (ID: ${a.assignmentId}) | Topics: ${a.topics.length}`);
+      });
+      return;
+    }
 
-    console.log(`✅ Auto-seeded ${inserted.length} assignments`);
-    inserted.slice(0, 5).forEach(a => {
-      console.log(`  • ${a.title} (ID: ${a.assignmentId}) | Topics: ${a.topics.length}`);
+    // If not empty, upsert any missing assignments by ID
+    const existing = await Assignment.find({}, 'assignmentId').lean();
+    const existingIds = new Set(existing.map(a => a.assignmentId));
+    const missing = data.filter(a => !existingIds.has(a.assignmentId));
+
+    if (missing.length === 0) {
+      console.log(`📚 Assignments already present (${count}). No missing IDs to seed.`);
+      return;
+    }
+
+    const preparedMissing = missing.map(ensureMinTopics);
+    const insertedMissing = await Assignment.insertMany(preparedMissing);
+    console.log(`✅ Seeded ${insertedMissing.length} missing assignments`);
+    insertedMissing.forEach(a => {
+      console.log(`  • Added ${a.assignmentId} | ${a.title}`);
     });
   } catch (err) {
     console.error('❌ Auto-seed failed:', err.message);

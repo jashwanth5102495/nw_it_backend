@@ -2674,5 +2674,121 @@
         { "questionId": "10", "prompt": "SWR/React Query avoid stale data by?", "options": ["stale-while-revalidate", "reloading the page", "CSS animations", "disabling cache"], "correctAnswer": 0 }
       ],
       "passingPercentage": 60
+    },
+    {
+      "assignmentId": "networking-beginner-1",
+      "courseId": "networking-beginner",
+      "title": "Assignment 1: Linux Network Interface Operations & Configuration",
+      "description": "Hands-on interface configuration, IP addressing, routes, and DNS on Linux.",
+      "topics": [
+        { "topicId": "linux-ifconfig", "title": "Legacy ifconfig", "content": "View and configure interfaces using ifconfig; loopback, eth0, flags, and basic up/down." },
+        { "topicId": "linux-ip-addr", "title": "ip addr & ip link", "content": "Modern iproute2 commands to inspect links, addresses, and interface states." },
+        { "topicId": "linux-ip-route", "title": "ip route & gateways", "content": "Default gateway, static routes, route metrics; verifying connectivity with ping." },
+        { "topicId": "linux-nmcli", "title": "nmcli basics", "content": "NetworkManager CLI to enable/disable devices, set IPv4/IPv6, and DNS." },
+        { "topicId": "linux-dns", "title": "resolv.conf & DNS", "content": "Configure name servers, search domains; test resolution with nslookup/dig." }
+      ],
+      "questions": [
+        { "questionId": "1", "prompt": "Which tool is part of iproute2?", "options": ["ifconfig", "ip", "route (net-tools)", "iwconfig"], "correctAnswer": 1 },
+        { "questionId": "2", "prompt": "Default gateway is used to?", "options": ["Resolve DNS", "Reach external networks", "Assign IPs", "Configure firewall"], "correctAnswer": 1 },
+        { "questionId": "3", "prompt": "Edit DNS servers typically via?", "options": ["/etc/hosts", "/etc/resolv.conf", "/etc/services", "iptables"], "correctAnswer": 1 },
+        { "questionId": "4", "prompt": "Bring interface up with ip?", "options": ["ip addr add", "ip link set dev eth0 up", "nmcli down", "ifconfig remove"], "correctAnswer": 1 },
+        { "questionId": "5", "prompt": "Check current routes with?", "options": ["ip route", "ifconfig -r", "nmcli routes", "netstat -p"], "correctAnswer": 0 }
+      ],
+      "passingPercentage": 60
+    },
+    {
+      "assignmentId": "networking-beginner-2",
+      "courseId": "networking-beginner",
+      "title": "Assignment 2: Cisco Packet Tracer Basics",
+      "description": "Create a simple LAN, assign IPs, and verify connectivity in Packet Tracer.",
+      "topics": [
+        { "topicId": "pt-intro", "title": "Packet Tracer Overview", "content": "Simulate routers, switches, and PCs; visualize packet flow." },
+        { "topicId": "pt-first-topology", "title": "First Topology", "content": "Two PCs via a switch, straight-through cables, addressing and ping tests." },
+        { "topicId": "pt-ip-config", "title": "IP Configuration", "content": "Static IPs, subnet masks, gateways; common addressing mistakes and fixes." }
+      ],
+      "questions": [
+        { "questionId": "1", "prompt": "Which cable connects PC to switch?", "options": ["Crossover", "Straight-through", "Console", "Fiber"], "correctAnswer": 1 },
+        { "questionId": "2", "prompt": "Successful ping requires?", "options": ["DNS only", "Correct IP/Subnet/Gateway", "Switch hostname", "VLAN 100"], "correctAnswer": 1 },
+        { "questionId": "3", "prompt": "Packet Tracer primarily is a?", "options": ["Traffic sniffer", "Simulator", "Firewall", "Router OS"], "correctAnswer": 1 },
+        { "questionId": "4", "prompt": "A 255.255.255.0 mask indicates?", "options": ["/16", "/24", "/8", "/32"], "correctAnswer": 1 },
+        { "questionId": "5", "prompt": "Gateway must be?", "options": ["Any IP", "Same subnet as host", "DNS IP", "Public IP only"], "correctAnswer": 1 }
+      ],
+      "passingPercentage": 60
+    },
+    {
+      "assignmentId": "networking-beginner-3",
+      "courseId": "networking-beginner",
+      "title": "Assignment 3: Ping, Traceroute, Netstat",
+      "description": "Use core tools to diagnose connectivity, routing path, and local sockets.",
+      "topics": [
+        { "topicId": "tool-ping", "title": "Ping (ICMP)", "content": "Reachability tests, TTL, packet loss; firewall/ICMP considerations." },
+        { "topicId": "tool-traceroute", "title": "Traceroute", "content": "Path discovery with varying TTL; detect routing loops or drops." },
+        { "topicId": "tool-netstat", "title": "Netstat", "content": "List listening ports and connections; protocol and PID mapping." }
+      ],
+      "questions": [
+        { "questionId": "1", "prompt": "Ping uses which protocol?", "options": ["TCP", "UDP", "ICMP", "ARP"], "correctAnswer": 2 },
+        { "questionId": "2", "prompt": "Traceroute reveals?", "options": ["MAC addresses", "Firewall rules", "Hops to destination", "Disk usage"], "correctAnswer": 2 },
+        { "questionId": "3", "prompt": "Netstat shows?", "options": ["Only DNS cache", "Active sockets/ports", "Wi‑Fi signal", "CPU load"], "correctAnswer": 1 },
+        { "questionId": "4", "prompt": "High packet loss indicates?", "options": ["Healthy link", "Congestion or drops", "DNS error", "Loopback only"], "correctAnswer": 1 },
+        { "questionId": "5", "prompt": "Blocked ICMP often causes?", "options": ["Ping timeout", "Traceroute success", "Faster pings", "Open ports"], "correctAnswer": 0 }
+      ],
+      "passingPercentage": 60
+    },
+    {
+      "assignmentId": "networking-beginner-4",
+      "courseId": "networking-beginner",
+      "title": "Assignment 4: Nmap Scanning Basics",
+      "description": "Perform safe host discovery and port scans; interpret common states.",
+      "topics": [
+        { "topicId": "nmap-intro", "title": "Nmap Basics", "content": "Host discovery, port scanning, service detection; ethical use only." },
+        { "topicId": "nmap-flags", "title": "Common Scan Types", "content": "SYN scan, TCP connect, UDP basics; timing templates and exclusions." },
+        { "topicId": "nmap-results", "title": "Interpreting Results", "content": "Open/closed/filtered states; banners and service versions with -sV." }
+      ],
+      "questions": [
+        { "questionId": "1", "prompt": "Which Nmap flag discovers services?", "options": ["-sS", "-sV", "-O", "-Pn"], "correctAnswer": 1 },
+        { "questionId": "2", "prompt": "Ethical scanning means?", "options": ["Any target", "Permission and scope", "Max speed", "Ignore ToS"], "correctAnswer": 1 },
+        { "questionId": "3", "prompt": "Filtered port suggests?", "options": ["Firewall blocking", "Always open", "DNS issue", "Local-only"], "correctAnswer": 0 },
+        { "questionId": "4", "prompt": "SYN scan flag is?", "options": ["-sT", "-sS", "-sU", "-sA"], "correctAnswer": 1 },
+        { "questionId": "5", "prompt": "Disable host discovery with?", "options": ["-O", "-Pn", "-sV", "-A"], "correctAnswer": 1 }
+      ],
+      "passingPercentage": 60
+    },
+    {
+      "assignmentId": "networking-beginner-5",
+      "courseId": "networking-beginner",
+      "title": "Assignment 5: DNS and DHCP Fundamentals",
+      "description": "Understand name resolution and dynamic addressing; verify and troubleshoot.",
+      "topics": [
+        { "topicId": "dns-basics", "title": "DNS Basics", "content": "Records (A/AAAA/CNAME/NS), resolvers, caching; testing with nslookup/dig." },
+        { "topicId": "dhcp-basics", "title": "DHCP Basics", "content": "Lease process (DORA), scopes, reservations; client renew and release." },
+        { "topicId": "dns-troubleshoot", "title": "Troubleshooting", "content": "Hosts file, resolv.conf, server reachability, common misconfigurations." }
+      ],
+      "questions": [
+        { "questionId": "1", "prompt": "DHCP assigns?", "options": ["Hostnames", "IP addresses", "MAC addresses", "Ports"], "correctAnswer": 1 },
+        { "questionId": "2", "prompt": "DNS A record maps?", "options": ["Name to IPv4", "IPv6 to MAC", "MAC to IP", "IP to port"], "correctAnswer": 0 },
+        { "questionId": "3", "prompt": "DHCP discovery step is?", "options": ["ACK", "OFFER", "DISCOVER", "REQUEST"], "correctAnswer": 2 },
+        { "questionId": "4", "prompt": "Wrong DNS causes?", "options": ["No ARP", "Name resolution failures", "Closed ports", "No routing table"], "correctAnswer": 1 },
+        { "questionId": "5", "prompt": "Reserve a static IP via?", "options": ["DNS", "DHCP reservation", "Traceroute", "Nmap"], "correctAnswer": 1 }
+      ],
+      "passingPercentage": 60
+    },
+    {
+      "assignmentId": "networking-beginner-6",
+      "courseId": "networking-beginner",
+      "title": "Assignment 6: Wireshark Traffic Analysis",
+      "description": "Capture and analyze traffic; apply filters to inspect protocols and flows.",
+      "topics": [
+        { "topicId": "wireshark-capture", "title": "Capturing Traffic", "content": "Select interfaces, capture safely; permissions and storage considerations." },
+        { "topicId": "wireshark-filters", "title": "Display Filters", "content": "ip.addr, tcp.port, http, dns; build precise views for analysis." },
+        { "topicId": "wireshark-tcp", "title": "TCP Analysis", "content": "Three-way handshake, retransmissions, throughput; diagnosing slow connections." }
+      ],
+      "questions": [
+        { "questionId": "1", "prompt": "Wireshark filter to show DNS?", "options": ["proto==dns", "dns", "udp.port==53", "icmp"], "correctAnswer": 1 },
+        { "questionId": "2", "prompt": "TCP handshake sequence?", "options": ["ACK-ACK", "SYN-SYN/ACK-ACK", "FIN-ACK", "PSH-RST"], "correctAnswer": 1 },
+        { "questionId": "3", "prompt": "To filter by IP address?", "options": ["host=1.2.3.4", "ip.addr==1.2.3.4", "ip==1.2.3.4", "tcp.ip==1.2.3.4"], "correctAnswer": 1 },
+        { "questionId": "4", "prompt": "Large retransmissions often mean?", "options": ["Healthy link", "Loss or congestion", "Fast network", "DNS cache"], "correctAnswer": 1 },
+        { "questionId": "5", "prompt": "Capture safely by?", "options": ["Max CPU", "Unrestricted promiscuous mode", "Limited scope and permissions", "Disable filters"], "correctAnswer": 2 }
+      ],
+      "passingPercentage": 60
     }
 ]

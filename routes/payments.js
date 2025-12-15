@@ -5,6 +5,9 @@ const Student = require('../models/Student');
 const Course = require('../models/Course');
 const Faculty = require('../models/Faculty');
 
+// Helper to safely build case-insensitive title match
+const escapeRegex = (s) => (typeof s === 'string' ? s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '');
+
 // Create a new payment record for manual QR payment
 router.post('/', async (req, res) => {
   try {
@@ -61,12 +64,27 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Verify course exists
-    const course = await Course.findById(courseId);
+    // Verify course exists (supports slug, ObjectId, or course name)
+    let course = null;
+    // Try ObjectId
+    if (courseId && courseId.match(/^[0-9a-fA-F]{24}$/)) {
+      course = await Course.findById(courseId);
+    }
+    // Try courseId slug variants
+    if (!course && courseId) {
+      course = await Course.findOne({ courseId })
+        || await Course.findOne({ courseId: (courseId || '').toUpperCase() })
+        || await Course.findOne({ courseId: (courseId || '').toLowerCase() });
+    }
+    // Try title match
+    if (!course && courseName) {
+      const titleRegex = new RegExp(`^${escapeRegex(courseName)}$`, 'i');
+      course = await Course.findOne({ title: titleRegex });
+    }
     if (!course) {
       return res.status(404).json({
         success: false,
-        message: 'Course not found'
+        message: `Course not found with courseId: ${courseId}`
       });
     }
 

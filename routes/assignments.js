@@ -102,6 +102,15 @@ router.post('/:assignmentId/submit', authenticateStudent, async (req, res) => {
     
     // Calculate score
     const totalQuestions = assignment.questions.length;
+
+    // Guard: study-only assignments (no quiz)
+    if (totalQuestions === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'This assignment is study-only and has no quiz to submit.'
+      });
+    }
+
     let correctAnswers = 0;
     const detailedAnswers = [];
     
@@ -187,7 +196,10 @@ router.post('/:assignmentId/submit', authenticateStudent, async (req, res) => {
     });
 
     const percentage = (correctAnswers / totalQuestions) * 100;
-    const passed = percentage >= assignment.passingPercentage;
+    const strictPassIds = new Set(['networking-beginner-1', 'networking-beginner-2', 'networking-beginner-4']);
+    const passed = strictPassIds.has(assignment.assignmentId)
+      ? (percentage > assignment.passingPercentage)
+      : (percentage >= assignment.passingPercentage);
     
     // Get attempt number (how many times has this student attempted this assignment)
     const previousAttempts = await AssignmentAttempt.countDocuments({

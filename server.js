@@ -11,6 +11,7 @@ const analyticsRoutes = require('./routes/analytics');
 const assignmentRoutes = require('./routes/assignments');
 const certificatesRoutes = require('./routes/certificates');
 const { router: authRoutes } = require('./routes/auth');
+const llmRoutes = require('./routes/llm');
 const User = require('./models/User');
 const { 
   securityHeaders, 
@@ -99,6 +100,7 @@ app.use('/api/certificates', certificatesRoutes);
 // Keep analytics behind admin protection
 app.use('/api/analytics', adminLimiter, authenticateAdmin, analyticsRoutes);
 app.use('/api/auth', authRoutes); // Auth routes have their own rate limiting
+app.use('/api/llm', llmRoutes); // Public chat API leveraging local LLM
 
 // Serve static uploaded certificates
 const path = require('path');
