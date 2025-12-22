@@ -200,13 +200,13 @@ router.post('/:assignmentId/submit', authenticateStudent, async (req, res) => {
     const passed = strictPassIds.has(assignment.assignmentId)
       ? (percentage > assignment.passingPercentage)
       : (percentage >= assignment.passingPercentage);
-    
+
     // Get attempt number (how many times has this student attempted this assignment)
     const previousAttempts = await AssignmentAttempt.countDocuments({
       studentEmail: userEmail,
       assignmentId
     });
-    
+
     // Create assignment attempt record
     const attemptRecord = new AssignmentAttempt({
       studentId: student._id,
@@ -220,9 +220,96 @@ router.post('/:assignmentId/submit', authenticateStudent, async (req, res) => {
       timeSpent: timeSpent || 0,
       attemptNumber: previousAttempts + 1
     });
-    
+
     await attemptRecord.save();
-    
+
+    // --- Update StudentProgress with assignment completion on pass ---
+    let progressUpdate = { updated: false };
+    try {
+      const Course = require('../models/Course');
+      const StudentProgress = require('../models/StudentProgress');
+
+      // Resolve course by string courseId on assignment
+      const course = await Course.findOne({ courseId: assignment.courseId })
+        || await Course.findOne({ courseId: new RegExp('^' + (assignment.courseId || '') + '$', 'i') });
+
+      if (course) {
+        let progress = await StudentProgress.findOne({ studentId: student._id, courseId: course._id });
+        // Auto-initialize progress if missing
+        if (!progress) {
+          progress = new StudentProgress({
+            studentId: student._id,
+            courseId: course._id,
+            enrollmentDate: new Date(),
+            modules: course.modules.map((m, idx) => ({
+              moduleId: `module_${idx + 1}`,
+              moduleTitle: m.title,
+              lessons: (m.topics || []).map((t, tIdx) => ({
+                lessonId: `lesson_${idx + 1}_${tIdx + 1}`,
+                lessonTitle: t
+              })),
+              assignments: [],
+              quizzes: []
+            }))
+          });
+        }
+
+        // Heuristic: place HA/Bonding assignment under module with bonding/LACP topics
+        const targetModule = progress.modules.find(m =>
+          /bonding|lacp|routing, switching|vlan/i.test(m.moduleTitle)
+        ) || progress.modules[progress.modules.length - 1] || progress.modules[0];
+
+        if (targetModule) {
+          let a = targetModule.assignments.find(x => x.assignmentId === assignment.assignmentId);
+          if (!a) {
+            a = {
+              assignmentId: assignment.assignmentId,
+              assignmentTitle: assignment.title,
+              status: 'not-started',
+              attempts: []
+            };
+            targetModule.assignments.push(a);
+            a = targetModule.assignments[targetModule.assignments.length - 1];
+          }
+
+          // Append attempt
+          a.attempts.push({
+            attemptNumber: (a.attempts?.length || 0) + 1,
+            submittedAt: new Date(),
+            score: correctAnswers,
+            timeSpent: timeSpent || 0
+          });
+
+          a.score = correctAnswers;
+          a.maxScore = totalQuestions;
+          a.submittedAt = a.submittedAt || new Date();
+
+          // Mark completed when percentage >= passingPercentage (requested policy)
+          if (passed) {
+            a.status = 'graded';
+            a.gradedAt = a.gradedAt || new Date();
+            targetModule.status = targetModule.status === 'not-started' ? 'in-progress' : targetModule.status;
+            progress.activityLog.push({
+              type: 'assignment_submitted',
+              details: { moduleId: targetModule.moduleId, assignmentId: a.assignmentId, score: a.score, maxScore: a.maxScore, passed: true }
+            });
+          } else {
+            a.status = 'submitted';
+            progress.activityLog.push({
+              type: 'assignment_submitted',
+              details: { moduleId: targetModule.moduleId, assignmentId: a.assignmentId, assignmentTitle: a.assignmentTitle, passed: false }
+            });
+          }
+
+          progress.lastActivityAt = new Date();
+          await progress.save();
+          progressUpdate = { updated: true, moduleId: targetModule.moduleId };
+        }
+      }
+    } catch (e) {
+      console.warn('StudentProgress update skipped:', e?.message);
+    }
+
     // Return result
     res.json({
       success: true,
@@ -234,10 +321,11 @@ router.post('/:assignmentId/submit', authenticateStudent, async (req, res) => {
         passed,
         attemptNumber: attemptRecord.attemptNumber,
         passingPercentage: assignment.passingPercentage,
-        message: passed 
-          ? '🎉 Congratulations! You passed the assignment!' 
-          : `📚 Keep learning! You need to score at least ${assignment.passingPercentage}% to pass.`
-      }
+        progressUpdate
+      },
+      message: passed
+        ? 'Congratulations! You passed the assignment.'
+        : `Keep learning! You need to score at least ${assignment.passingPercentage}% to pass.`
     });
   } catch (error) {
     console.error('Error submitting assignment:', error);
