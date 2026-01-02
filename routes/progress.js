@@ -33,7 +33,15 @@ async function resolveCourseId(courseIdParam) {
     'frontend-advanced': ['Frontend Development - Advanced'],
     'devops-beginner': ['DEVOPS-BEGINNER', 'DevOps - Beginner'],
     'devops-intermediate': ['DEVOPS-INTERMEDIATE', 'DevOps - Intermediate'],
-    'ai-tools-mastery': ['AI-TOOLS-MASTERY', 'AI Tools Mastery']
+    'ai-tools-mastery': ['AI-TOOLS-MASTERY', 'AI Tools Mastery'],
+    // Cyber Security synonyms (frontend ids → backend seeded ids)
+    'cybersecurity-beginner': ['CYBER-SECURITY-BEGINNER', 'Cyber Security - Beginner', 'cyber-security-beginner'],
+    'cybersecurity-intermediate': ['CYBER-SECURITY-INTERMEDIATE', 'Cyber Security - Intermediate', 'cyber-security-intermediate'],
+    'cybersecurity-advanced': ['CYBER-SECURITY-ADVANCED', 'Cyber Security - Advanced', 'cyber-security-advanced'],
+    // Networking synonyms used elsewhere
+    'networking-beginner': ['NETWORKING-BEGINNER', 'Networking - Beginner', 'Networking Beginner'],
+    'networking-intermediate': ['NETWORKING-INTERMEDIATE', 'Networking - Intermediate', 'Networking Intermediate'],
+    'networking-advanced': ['NETWORKING-ADVANCED', 'Networking - Advanced', 'Networking Advanced']
   };
   const candidates = [
     courseIdParam,

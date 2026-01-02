@@ -42,7 +42,18 @@ async function resolveCourseId(courseIdParam) {
     // Added networking synonyms
     'networking-beginner': ['NETWORKING-BEGINNER', 'Networking - Beginner', 'Networking Beginner'],
     'networking-intermediate': ['NETWORKING-INTERMEDIATE', 'Networking - Intermediate', 'Networking Intermediate'],
-    'networking-advanced': ['NETWORKING-ADVANCED', 'Networking - Advanced', 'Networking Advanced']
+    'networking-advanced': ['NETWORKING-ADVANCED', 'Networking - Advanced', 'Networking Advanced'],
+    // Cyber Security synonyms (align frontend ids to seeded backend ids)
+    'cybersecurity-beginner': ['CYBER-SECURITY-BEGINNER', 'Cyber Security - Beginner', 'cyber-security-beginner'],
+    'cybersecurity-intermediate': ['CYBER-SECURITY-INTERMEDIATE', 'Cyber Security - Intermediate', 'cyber-security-intermediate'],
+    'cybersecurity-advanced': ['CYBER-SECURITY-ADVANCED', 'Cyber Security - Advanced', 'cyber-security-advanced'],
+    // Accept frontend variants as keys too → map to seeded ids
+    'cyber-security-beginner': ['cybersecurity-beginner', 'CYBERSECURITY-BEGINNER', 'Cyber Security - Beginner'],
+    'CYBER-SECURITY-BEGINNER': ['cybersecurity-beginner', 'Cyber Security - Beginner'],
+    'cyber-security-intermediate': ['cybersecurity-intermediate', 'CYBERSECURITY-INTERMEDIATE', 'Cyber Security - Intermediate'],
+    'CYBER-SECURITY-INTERMEDIATE': ['cybersecurity-intermediate', 'Cyber Security - Intermediate'],
+    'cyber-security-advanced': ['cybersecurity-advanced', 'CYBERSECURITY-ADVANCED', 'Cyber Security - Advanced'],
+    'CYBER-SECURITY-ADVANCED': ['cybersecurity-advanced', 'Cyber Security - Advanced']
   };
   const candidates = [
     courseIdParam,
