@@ -140,7 +140,7 @@ app.listen(PORT, async () => {
   try {
     await db.connect();
     const allUsers = await User.find({});
-    console.log(allUsers);
+    // console.log(allUsers);
     // Auto-seed assignments only if collection is empty
     await seedIfEmpty();
     console.log(`✅ Database connected to MongoDB successfully`);
