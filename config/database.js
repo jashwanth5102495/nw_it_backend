@@ -8,7 +8,7 @@ class Database {
   async connect() {
     try {
       // MongoDB connection string - with localhost fallback for local development
-      const mongoURI =  'mongodb://localhost:27017/jasnav_projects' ; // process.env.MONGODB_URI ||
+      const mongoURI =  process.env.MONGODB_URI || 'mongodb:localhost:27017/jasnav_projects' ;
       console.log(mongoURI);
       console.log(`🔗 Connecting to MongoDB: ${mongoURI.includes('localhost') ? 'localhost:27017' : 'cloud database'}`);
       
