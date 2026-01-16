@@ -9,6 +9,7 @@ const MODEL = process.env.LLM_MODEL || 'qwen2.5-coder:3b';
 // Ollama configuration - supports both local and remote (proxy) deployments
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
 const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY || ''; // For authenticated proxies
+console.log(OLLAMA_API_KEY);
 
 // LM Studio (OpenAI-compatible) defaults
 const LMSTUDIO_URL = process.env.LMSTUDIO_URL || 'http://localhost:1234/v1';
