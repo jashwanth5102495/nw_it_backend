@@ -7,8 +7,10 @@ const PROVIDER = (process.env.LLM_PROVIDER || 'ollama').toLowerCase();
 const MODEL = process.env.LLM_MODEL || 'qwen2.5-coder:3b';
 
 // Ollama configuration - supports both local and remote (proxy) deployments
-const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434';
+// Remove trailing slash from URL to prevent double slashes
+const OLLAMA_URL = (process.env.OLLAMA_URL || 'http://localhost:11434').replace(/\/+$/, '');
 const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY || ''; // For authenticated proxies
+const OLLAMA_API_KEY_HEADER = process.env.OLLAMA_API_KEY_HEADER || 'X-API-Key'; // Header name for API key (default: X-API-Key)
 
 // LM Studio (OpenAI-compatible) defaults
 const LMSTUDIO_URL = process.env.LMSTUDIO_URL || 'http://localhost:1234/v1';
@@ -25,7 +27,7 @@ async function getOllamaModels() {
   try {
     const headers = { 'Content-Type': 'application/json' };
     if (OLLAMA_API_KEY) {
-      headers['Authorization'] = `Bearer ${OLLAMA_API_KEY}`;
+      headers[OLLAMA_API_KEY_HEADER] = OLLAMA_API_KEY;
     }
     
     const resp = await fetch(`${OLLAMA_URL}/api/tags`, { headers });
@@ -72,8 +74,8 @@ async function callOllama(messages, model) {
   
   const headers = { 'Content-Type': 'application/json' };
   if (OLLAMA_API_KEY) {
-    headers['Authorization'] = `Bearer ${OLLAMA_API_KEY}`;
-    console.log('   🔑 Using API key: Yes');
+    headers[OLLAMA_API_KEY_HEADER] = OLLAMA_API_KEY;
+    console.log('   🔑 Using API key: Yes (header:', OLLAMA_API_KEY_HEADER + ')');
   } else {
     console.log('   🔑 Using API key: No');
   }
@@ -121,7 +123,7 @@ async function callOllama(messages, model) {
 async function callOpenAICompatible(messages, model, baseUrl) {
   const headers = { 'Content-Type': 'application/json' };
   if (OLLAMA_API_KEY) {
-    headers['Authorization'] = `Bearer ${OLLAMA_API_KEY}`;
+    headers[OLLAMA_API_KEY_HEADER] = OLLAMA_API_KEY;
   }
 
   const resp = await fetch(`${baseUrl}/chat/completions`, {
