@@ -165,6 +165,7 @@ router.get('/analytics/dashboard', async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching payment analytics:', error);
+    console.error(error.stack);
     res.status(500).json({
       success: false,
       message: 'Error fetching payment analytics',
@@ -530,6 +531,7 @@ router.get('/analytics/active-users', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching active users analytics:', error);
+    console.error(error.stack);
     res.status(500).json({
       success: false,
       message: 'Error fetching active users analytics',

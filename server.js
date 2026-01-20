@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+require('dotenv').config();
 const db = require('./config/database');
 const projectRoutes = require('./routes/projects');
 const studentRoutes = require('./routes/students');
@@ -22,7 +23,6 @@ const {
 const { authenticateAdmin } = require('./middleware/adminAuth');
 // Add auto-seed utility
 const { seedIfEmpty } = require('./utils/autoSeedAssignments');
-require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
