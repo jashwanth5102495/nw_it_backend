@@ -28,7 +28,11 @@ const questionSchema = new mongoose.Schema({
   },
   prompt: {
     type: String,
-    required: true
+    required: false
+  },
+  question: {
+    type: String,
+    required: false
   },
   options: [{
     type: String,
@@ -60,6 +64,10 @@ const assignmentSchema = new mongoose.Schema({
   },
   topics: [topicSchema],
   questions: [questionSchema],
+  totalQuestions: {
+    type: Number,
+    default: 0
+  },
   passingPercentage: {
     type: Number,
     default: 50 // Students need to score more than 50% to pass
