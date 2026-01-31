@@ -83,8 +83,19 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Security middleware (applied after body parsing)
 app.use(securityHeaders);
-app.use(preventSQLInjection);
-app.use(preventXSS);
+// Skip SQL injection and XSS checks for LLM routes (they handle code/script content by design)
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/llm')) {
+    return next();
+  }
+  preventSQLInjection(req, res, next);
+});
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/llm')) {
+    return next();
+  }
+  preventXSS(req, res, next);
+});
 
 // Routes with rate limiting for sensitive endpoints
 app.use('/api/projects', projectRoutes);

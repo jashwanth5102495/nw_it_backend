@@ -8,7 +8,7 @@ const MODEL = process.env.LLM_MODEL || 'qwen2.5-coder:3b';
 
 // Ollama configuration - supports both local and remote (proxy) deployments
 // Remove trailing slash from URL to prevent double slashes
-const OLLAMA_URL = (process.env.OLLAMA_URL || 'http://localhost:11434').replace(/\/+$/, '');
+const OLLAMA_URL = process.env.OLLAMA_URL || '';
 const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY || ''; // For authenticated proxies
 const OLLAMA_API_KEY_HEADER = process.env.OLLAMA_API_KEY_HEADER || 'X-API-Key'; // Header name for API key (default: X-API-Key)
 
@@ -162,18 +162,22 @@ router.post('/chat', async (req, res) => {
   console.log('🔧 Provider:', PROVIDER);
   console.log('📦 Model:', MODEL);
   console.log('🌐 Ollama URL:', OLLAMA_URL);
-  console.log('API KEY: ', OLLAMA_API_KEY);
+  console.log('API KEY: ', OLLAMA_API_KEY ? '[REDACTED]' : 'Not set');
+  console.log('📥 Raw body type:', typeof req.body);
+  console.log('📥 Raw body keys:', req.body ? Object.keys(req.body) : 'null');
   
   try {
     const { question, history = [], systemPrompt, courseContext } = req.body || {};
     
-    console.log('📝 Question:', question?.substring(0, 100) + (question?.length > 100 ? '...' : ''));
-    console.log('📜 History length:', history?.length || 0);
+    console.log('📝 Question type:', typeof question);
+    console.log('📝 Question value:', question ? question.substring(0, 100) + (question.length > 100 ? '...' : '') : 'UNDEFINED/NULL');
+    console.log('📜 History length:', Array.isArray(history) ? history.length : 'not an array');
     console.log('🎯 Course context:', courseContext ? JSON.stringify(courseContext).substring(0, 100) : 'None');
     
-    if (!question || typeof question !== 'string') {
-      console.log('❌ ERROR: Question is missing or invalid');
-      return res.status(400).json({ success: false, message: 'Question is required' });
+    if (!question || typeof question !== 'string' || question.trim() === '') {
+      console.log('❌ ERROR: Question is missing, invalid, or empty');
+      console.log('❌ Received question value:', JSON.stringify(question));
+      return res.status(400).json({ success: false, message: 'Question is required and must be a non-empty string' });
     }
 
     // Build enhanced system prompt if course context is provided
