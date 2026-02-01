@@ -82,9 +82,15 @@ async function callOllama(messages, model) {
 
   try {
     console.log('   ⏳ Sending request to Ollama...');
+    
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 second timeout
+    
     const resp = await fetch(`${OLLAMA_URL}/api/chat`, {
       method: 'POST',
       headers,
+      signal: controller.signal,
       body: JSON.stringify({ 
         model, 
         messages, 
@@ -95,6 +101,8 @@ async function callOllama(messages, model) {
         }
       })
     });
+    
+    clearTimeout(timeoutId);
 
     console.log('   📬 Ollama response status:', resp.status);
     
@@ -112,6 +120,10 @@ async function callOllama(messages, model) {
     console.log('   ❌ callOllama() ERROR:', err.message);
     if (err.code === 'ECONNREFUSED') {
       console.log('   ⚠️ HINT: Is Ollama running? Try: ollama serve');
+    }
+    if (err.name === 'AbortError') {
+      console.log('   ⚠️ Request timed out after 120 seconds');
+      throw new Error('AI tutor request timed out. Please try again.');
     }
     throw err;
   }
