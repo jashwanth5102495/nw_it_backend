@@ -8,7 +8,7 @@ const MODEL = process.env.LLM_MODEL || 'qwen2.5-coder:3b';
 
 // Ollama configuration - supports both local and remote (proxy) deployments
 // Remove trailing slash from URL to prevent double slashes
-const OLLAMA_URL = process.env.OLLAMA_URL || '';
+const OLLAMA_URL = (process.env.OLLAMA_URL || '').replace(/\/+$/, '');
 const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY || ''; // For authenticated proxies
 const OLLAMA_API_KEY_HEADER = process.env.OLLAMA_API_KEY_HEADER || 'X-API-Key'; // Header name for API key (default: X-API-Key)
 
