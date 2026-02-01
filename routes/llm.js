@@ -85,7 +85,7 @@ async function callOllama(messages, model) {
     
     // Create AbortController for timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minute timeout for complex questions
     
     const resp = await fetch(`${OLLAMA_URL}/api/chat`, {
       method: 'POST',
@@ -122,8 +122,8 @@ async function callOllama(messages, model) {
       console.log('   ⚠️ HINT: Is Ollama running? Try: ollama serve');
     }
     if (err.name === 'AbortError') {
-      console.log('   ⚠️ Request timed out after 120 seconds');
-      throw new Error('AI tutor request timed out. Please try again.');
+      console.log('   ⚠️ Request timed out after 5 minutes');
+      throw new Error('AI tutor request timed out. Please try again with a simpler question.');
     }
     throw err;
   }
