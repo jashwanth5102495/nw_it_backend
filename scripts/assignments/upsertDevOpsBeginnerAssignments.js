@@ -1,7 +1,6 @@
-require('dotenv').config();
+require('dotenv').config({path: "../../.env"});
 const mongoose = require('mongoose');
 const Assignment = require('../../models/Assignment');
-
 const assignmentsData = [
   {
     assignmentId: 'devops-beginner-1',
@@ -1189,6 +1188,7 @@ const assignmentsData = [
 
 (async () => {
   try {
+    console.log(process.env.MONGODB_URI);
     const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/jasnav_projects';
     await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
     console.log('Connected to MongoDB');
