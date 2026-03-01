@@ -86,15 +86,21 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Security middleware (applied after body parsing)
 app.use(securityHeaders);
-// Skip SQL injection and XSS checks for LLM routes (they handle code/script content by design)
+// Skip SQL injection and XSS checks for routes that carry OAuth tokens or code content
+// (Google OAuth tokens contain base64 strings that trigger false positives)
+const skipSecurityCheck = (path) =>
+  path.startsWith('/api/llm') ||
+  path === '/api/students/google-login' ||
+  path === '/api/log/client-error';
+
 app.use((req, res, next) => {
-  if (req.path.startsWith('/api/llm')) {
+  if (skipSecurityCheck(req.path)) {
     return next();
   }
   preventSQLInjection(req, res, next);
 });
 app.use((req, res, next) => {
-  if (req.path.startsWith('/api/llm')) {
+  if (skipSecurityCheck(req.path)) {
     return next();
   }
   preventXSS(req, res, next);
