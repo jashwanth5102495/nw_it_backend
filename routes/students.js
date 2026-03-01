@@ -10,6 +10,7 @@ const router = express.Router();
 const { OAuth2Client } = require('google-auth-library');
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID);
 const Assignment = require('../models/Assignment');
+const { serverLog, generateRequestId } = require('../utils/serverLog');
 
 // Utility: resolve course by human-friendly courseId or Mongo ObjectId
 function escapeRegex(str) {
@@ -432,37 +433,76 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Google login - verify Google ID token then create or fetch Student/User
+// ===== GOOGLE LOGIN — production-grade logging =====
 router.post('/google-login', async (req, res) => {
+  const requestId = generateRequestId('GOOGLE');
+  const startMs = Date.now();
+
+  serverLog(requestId, '▶ GOOGLE LOGIN REQUEST START', {
+    ip: req.ip,
+    userAgent: req.get('User-Agent'),
+    bodyKeys: Object.keys(req.body || {})
+  });
+
   try {
     const { credential, idToken, accessToken, userInfo } = req.body;
-    
+
+    serverLog(requestId, 'Step 1: Credential presence check', {
+      hasAccessToken: Boolean(accessToken),
+      hasIdToken: Boolean(idToken),
+      hasCredential: Boolean(credential),
+      hasUserInfo: Boolean(userInfo)
+    });
+
     let googleId, email, firstName, lastName;
-    
-    // Handle new flow with accessToken and userInfo
+
+    // ── accessToken + userInfo flow ──────────────────────────
     if (accessToken && userInfo) {
+      serverLog(requestId, 'Step 2a: Using accessToken + userInfo flow');
       googleId = userInfo.sub;
       email = (userInfo.email || '').toLowerCase();
       firstName = userInfo.given_name || 'Student';
       lastName = userInfo.family_name || 'User';
+
+      serverLog(requestId, 'Step 2a: Extracted identity', {
+        googleId,
+        email,
+        firstName,
+        lastName
+      });
     } else {
-      // Handle old flow with idToken
+      // ── idToken / credential flow ────────────────────────
+      serverLog(requestId, 'Step 2b: Using idToken/credential flow');
       const tokenToVerify = credential || idToken;
 
       if (!tokenToVerify) {
+        serverLog(requestId, '✗ ABORT: No token to verify');
         return res.status(400).json({ success: false, message: 'Missing Google credentials' });
       }
+
+      serverLog(requestId, 'Step 2b: Token received', {
+        tokenLength: tokenToVerify.length,
+        tokenPrefix: tokenToVerify.substring(0, 10) + '…'
+      });
+
+      const audience = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
+      serverLog(requestId, 'Step 2b: Verifying token', {
+        audienceSet: Boolean(audience),
+        googleClientConfigured: Boolean(googleClient._clientId)
+      });
+
       if (!googleClient._clientId) {
-        console.warn('Google client ID not configured');
+        serverLog(requestId, '⚠ WARNING: Google client ID not configured on server');
       }
 
-      // Verify the token
       const ticket = await googleClient.verifyIdToken({
         idToken: tokenToVerify,
-        audience: process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID
+        audience
       });
       const payload = ticket.getPayload();
+
       if (!payload) {
+        serverLog(requestId, '✗ ABORT: Token verified but payload is empty');
         return res.status(401).json({ success: false, message: 'Invalid Google token' });
       }
 
@@ -470,13 +510,26 @@ router.post('/google-login', async (req, res) => {
       email = (payload.email || '').toLowerCase();
       firstName = payload.given_name || 'Student';
       lastName = payload.family_name || 'User';
+
+      serverLog(requestId, 'Step 2b: Token verified successfully', {
+        googleId,
+        email,
+        firstName,
+        lastName
+      });
     }
 
-    // Try to find existing student by email
+    // ── DB lookup ───────────────────────────────────────────
+    serverLog(requestId, 'Step 3: Looking up existing student by email', { email });
     let student = await Student.findOne({ email });
     let user;
+    const isExistingStudent = Boolean(student);
 
-    // Ensure a user record exists
+    serverLog(requestId, 'Step 3: Lookup result', {
+      existingStudent: isExistingStudent,
+      studentId: student ? student._id : null
+    });
+
     const baseUsername = email ? email.split('@')[0] : `google_${googleId}`;
     const makeUniqueUsername = async (base) => {
       let candidate = base;
@@ -488,7 +541,8 @@ router.post('/google-login', async (req, res) => {
     };
 
     if (student) {
-      // Link/update Google metadata
+      // ── Existing student — update Google metadata ────────
+      serverLog(requestId, 'Step 4a: Updating existing student Google metadata');
       student.authProvider = 'google';
       student.googleId = googleId;
       student.lastLogin = new Date();
@@ -496,11 +550,12 @@ router.post('/google-login', async (req, res) => {
 
       user = await User.findById(student.user_id);
       if (!user) {
+        serverLog(requestId, 'Step 4a: No linked User record — creating one');
         const username = await makeUniqueUsername(baseUsername);
-        user = new User({ 
-          username, 
+        user = new User({
+          username,
           email: email,
-          password: Math.random().toString(36).slice(2), 
+          password: Math.random().toString(36).slice(2),
           role: 'student',
           authProvider: 'google',
           googleId: googleId
@@ -508,25 +563,28 @@ router.post('/google-login', async (req, res) => {
         await user.save();
         student.user_id = user._id;
         await student.save();
+        serverLog(requestId, 'Step 4a: Created & linked new User', { userId: user._id, username });
       } else {
-        // Update user with email and Google info if not already set
         if (!user.email) user.email = email;
         if (!user.authProvider || user.authProvider === 'local') user.authProvider = 'google';
         if (!user.googleId) user.googleId = googleId;
         await user.save();
+        serverLog(requestId, 'Step 4a: Linked existing User updated', { userId: user._id });
       }
     } else {
-      // Create a fresh User and minimal Student; complete later via setup
+      // ── New student — create User + Student ──────────────
+      serverLog(requestId, 'Step 4b: Creating new User & Student records');
       const username = await makeUniqueUsername(baseUsername);
-      user = new User({ 
-        username, 
+      user = new User({
+        username,
         email: email,
-        password: Math.random().toString(36).slice(2), 
+        password: Math.random().toString(36).slice(2),
         role: 'student',
         authProvider: 'google',
         googleId: googleId
       });
       await user.save();
+      serverLog(requestId, 'Step 4b: User created', { userId: user._id, username });
 
       const { v4: uuidv4 } = require('uuid');
       const studentId = `STU-${uuidv4().substring(0, 8).toUpperCase()}`;
@@ -548,10 +606,21 @@ router.post('/google-login', async (req, res) => {
         lastLogin: new Date()
       });
       await student.save();
+      serverLog(requestId, 'Step 4b: Student created', { studentMongoId: student._id, studentId });
     }
 
-    // Generate our JWT
+    // ── Generate JWT ────────────────────────────────────────
+    serverLog(requestId, 'Step 5: Generating JWT');
     const appToken = generateToken(user._id, student._id);
+    serverLog(requestId, 'Step 5: JWT generated', { tokenLength: appToken.length });
+
+    const durationMs = Date.now() - startMs;
+    serverLog(requestId, '✅ GOOGLE LOGIN SUCCESS', {
+      email,
+      isNewStudent: !isExistingStudent,
+      setupRequired: Boolean(student.setupRequired),
+      durationMs
+    });
 
     res.json({
       success: true,
@@ -585,8 +654,19 @@ router.post('/google-login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Google login error:', error);
-    res.status(500).json({ success: false, message: 'Error during Google login', error: error.message });
+    const durationMs = Date.now() - startMs;
+    serverLog(requestId, '❌ GOOGLE LOGIN EXCEPTION', {
+      errorName: error.name,
+      errorMessage: error.message,
+      stack: error.stack,
+      durationMs
+    });
+
+    // Return generic message — never expose internals to client
+    res.status(500).json({
+      success: false,
+      message: 'Error during Google login. Please try again.'
+    });
   }
 });
 

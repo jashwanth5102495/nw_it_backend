@@ -23,6 +23,8 @@ const {
 const { authenticateAdmin } = require('./middleware/adminAuth');
 // Add auto-seed utility
 const { seedIfEmpty } = require('./utils/autoSeedAssignments');
+// Production logging helper — env validation at startup
+const { logEnvironmentConfig } = require('./utils/serverLog');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -148,6 +150,9 @@ app.use('*', (req, res) => {
 
 // Start server
 app.listen(PORT, async () => {
+  // Log environment configuration for Google OAuth + general health
+  logEnvironmentConfig();
+
   try {
     await db.connect();
     const allUsers = await User.find({});
