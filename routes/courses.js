@@ -1,8 +1,85 @@
 const express = require('express');
 const Course = require('../models/Course');
 const Payment = require('../models/Payment');
+const AuthoringCourse = require('../models/AuthoringCourse');
 const router = express.Router();
 const { authenticateStudent } = require('../middleware/auth');
+const { authenticateAdmin } = require('../middleware/adminAuth');
+
+router.get('/authoring', async (req, res) => {
+  try {
+    const courses = await AuthoringCourse.find({}).sort({ updatedAt: -1, createdAt: -1 });
+    res.json({ success: true, data: courses, count: courses.length });
+  } catch (error) {
+    console.error('Error fetching authoring courses:', error);
+    res.status(500).json({ success: false, message: 'Error fetching authoring courses', error: error.message });
+  }
+});
+
+router.get('/authoring/:courseId', async (req, res) => {
+  try {
+    const courseId = req.params.courseId;
+    const course = await AuthoringCourse.findOne({ id: courseId });
+    if (!course) {
+      return res.status(404).json({ success: false, message: 'Authoring course not found' });
+    }
+    res.json({ success: true, data: course });
+  } catch (error) {
+    console.error('Error fetching authoring course:', error);
+    res.status(500).json({ success: false, message: 'Error fetching authoring course', error: error.message });
+  }
+});
+
+router.post('/authoring', authenticateAdmin, async (req, res) => {
+  try {
+    const payload = req.body || {};
+    if (!payload.id) {
+      return res.status(400).json({ success: false, message: 'Course id is required' });
+    }
+    const existing = await AuthoringCourse.findOne({ id: payload.id });
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'Authoring course already exists' });
+    }
+    const created = await AuthoringCourse.create(payload);
+    res.status(201).json({ success: true, message: 'Authoring course created successfully', data: created });
+  } catch (error) {
+    console.error('Error creating authoring course:', error);
+    res.status(500).json({ success: false, message: 'Error creating authoring course', error: error.message });
+  }
+});
+
+router.put('/authoring/:courseId', authenticateAdmin, async (req, res) => {
+  try {
+    const courseId = req.params.courseId;
+    const payload = req.body || {};
+    if (!payload.id) payload.id = courseId;
+
+    const updated = await AuthoringCourse.findOneAndUpdate(
+      { id: courseId },
+      payload,
+      { new: true, upsert: true, runValidators: true }
+    );
+
+    res.json({ success: true, message: 'Authoring course updated successfully', data: updated });
+  } catch (error) {
+    console.error('Error updating authoring course:', error);
+    res.status(500).json({ success: false, message: 'Error updating authoring course', error: error.message });
+  }
+});
+
+router.delete('/authoring/:courseId', authenticateAdmin, async (req, res) => {
+  try {
+    const courseId = req.params.courseId;
+    const deleted = await AuthoringCourse.findOneAndDelete({ id: courseId });
+    if (!deleted) {
+      return res.status(404).json({ success: false, message: 'Authoring course not found' });
+    }
+    res.json({ success: true, message: 'Authoring course deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting authoring course:', error);
+    res.status(500).json({ success: false, message: 'Error deleting authoring course', error: error.message });
+  }
+});
 
 // Get all active courses
 router.get('/', async (req, res) => {
