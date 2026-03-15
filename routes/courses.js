@@ -9,6 +9,7 @@ const { authenticateAdmin } = require('../middleware/adminAuth');
 router.get('/authoring', async (req, res) => {
   try {
     const courses = await AuthoringCourse.find({}).sort({ updatedAt: -1, createdAt: -1 });
+    res.set('Cache-Control', 'no-store');
     res.json({ success: true, data: courses, count: courses.length });
   } catch (error) {
     console.error('Error fetching authoring courses:', error);
@@ -23,6 +24,7 @@ router.get('/authoring/:courseId', async (req, res) => {
     if (!course) {
       return res.status(404).json({ success: false, message: 'Authoring course not found' });
     }
+    res.set('Cache-Control', 'no-store');
     res.json({ success: true, data: course });
   } catch (error) {
     console.error('Error fetching authoring course:', error);
