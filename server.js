@@ -90,6 +90,7 @@ app.use(securityHeaders);
 // (Google OAuth tokens contain base64 strings that trigger false positives)
 const skipSecurityCheck = (path) =>
   path.startsWith('/api/llm') ||
+  path.startsWith('/api/courses/authoring') ||
   path === '/api/students/google-login' ||
   path === '/api/log/client-error';
 
